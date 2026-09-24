@@ -1,0 +1,6 @@
+{
+  "name": "InterviewHub",
+  "description": "Student interview intelligence platform for sharing and discovering real campus & off-campus interview experiences, questions, repeated topics, and preparation insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

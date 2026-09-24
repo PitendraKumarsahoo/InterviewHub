@@ -1,0 +1,172 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered student profile on InterviewHub",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "email": { "type": "string", "maxLength": 150 },
+        "college": { "type": "string", "maxLength": 200 },
+        "branch": { "type": "string", "maxLength": 100 },
+        "degree": { "type": "string", "maxLength": 50 },
+        "graduationYear": { "type": "number" },
+        "photoURL": { "type": "string", "maxLength": 500 },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "bookmarkedExperienceIds": { "type": "array", "description": "Array of experience IDs bookmarked by the student" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "role", "createdAt"]
+    },
+    "Company": {
+      "title": "Company",
+      "description": "Company profile for interview discovery",
+      "type": "object",
+      "properties": {
+        "companyId": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "slug": { "type": "string", "maxLength": 100 },
+        "category": { "type": "string", "maxLength": 50 },
+        "type": { "type": "string", "maxLength": 50 },
+        "logo": { "type": "string", "maxLength": 500 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "experienceCount": { "type": "number" },
+        "questionCount": { "type": "number" },
+        "viewCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["companyId", "name", "category", "type", "createdAt"]
+    },
+    "Experience": {
+      "title": "Experience",
+      "description": "Student submitted interview experience",
+      "type": "object",
+      "properties": {
+        "experienceId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorCollege": { "type": "string", "maxLength": 200 },
+        "companyId": { "type": "string", "maxLength": 128 },
+        "companyName": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "maxLength": 100 },
+        "interviewType": { "type": "string", "enum": ["Campus", "Off-campus", "Internship", "PPO"] },
+        "year": { "type": "number" },
+        "result": { "type": "string", "enum": ["Selected", "Not Selected", "Waitlisted", "Prefer not to say"] },
+        "difficulty": { "type": "string", "enum": ["Easy", "Moderate", "Difficult"] },
+        "rounds": { "type": "string", "description": "Serialized rounds JSON" },
+        "technologies": { "type": "string", "description": "Comma separated or serialized technologies" },
+        "tags": { "type": "array", "description": "Skill and domain categorization tags" },
+        "experienceText": { "type": "string", "maxLength": 10000 },
+        "advice": { "type": "string", "maxLength": 3000 },
+        "overallRating": { "type": "number" },
+        "upvotes": { "type": "number", "description": "Number of community helpful upvotes" },
+        "upvotedBy": { "type": "array", "description": "User IDs who upvoted this experience" },
+        "bookmarkedBy": { "type": "array", "description": "User IDs who saved/bookmarked this experience" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["experienceId", "userId", "companyId", "companyName", "role", "interviewType", "year", "result", "difficulty", "experienceText", "status", "createdAt"]
+    },
+    "Question": {
+      "title": "Question",
+      "description": "Interview question from experience or direct community report",
+      "type": "object",
+      "properties": {
+        "questionId": { "type": "string", "maxLength": 128 },
+        "companyId": { "type": "string", "maxLength": 128 },
+        "companyName": { "type": "string", "maxLength": 100 },
+        "experienceId": { "type": "string", "maxLength": 128 },
+        "type": { "type": "string", "enum": ["Technical", "Coding", "Aptitude", "GD", "HR", "Other"] },
+        "questionText": { "type": "string", "maxLength": 3000 },
+        "normalizedText": { "type": "string", "maxLength": 3000 },
+        "technology": { "type": "string", "maxLength": 100 },
+        "topic": { "type": "string", "maxLength": 100 },
+        "difficulty": { "type": "string", "enum": ["Easy", "Medium", "Hard"] },
+        "language": { "type": "string", "maxLength": 50 },
+        "solution": { "type": "string", "maxLength": 10000 },
+        "explanation": { "type": "string", "maxLength": 5000 },
+        "askedCount": { "type": "number" },
+        "askedByUserIds": { "type": "string", "description": "Serialized user IDs who confirmed being asked this" },
+        "upvotes": { "type": "number", "description": "Number of community helpful upvotes" },
+        "upvotedBy": { "type": "array", "description": "User IDs who upvoted this question" },
+        "status": { "type": "string", "enum": ["approved", "pending"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["questionId", "questionText", "type", "askedCount", "status", "createdAt"]
+    },
+    "Answer": {
+      "title": "Answer",
+      "description": "Community solution or insight on an interview question",
+      "type": "object",
+      "properties": {
+        "answerId": { "type": "string", "maxLength": 128 },
+        "questionId": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "authorName": { "type": "string", "maxLength": 100 },
+        "authorCollege": { "type": "string", "maxLength": 200 },
+        "answerText": { "type": "string", "maxLength": 10000 },
+        "upvotes": { "type": "number" },
+        "downvotes": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["answerId", "questionId", "userId", "answerText", "upvotes", "createdAt"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Privileged administrator record",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 150 },
+        "role": { "type": "string", "enum": ["admin"] },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "Report": {
+      "title": "Report",
+      "description": "User flagged content for moderation",
+      "type": "object",
+      "properties": {
+        "reportId": { "type": "string", "maxLength": 128 },
+        "contentType": { "type": "string", "enum": ["experience", "question", "answer"] },
+        "contentId": { "type": "string", "maxLength": 128 },
+        "reportedBy": { "type": "string", "maxLength": 128 },
+        "reason": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["pending", "resolved", "dismissed"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reportId", "contentType", "contentId", "reportedBy", "reason", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Student user profiles"
+    },
+    "/companies/{companyId}": {
+      "schema": "Company",
+      "description": "Companies hiring from colleges and market"
+    },
+    "/experiences/{experienceId}": {
+      "schema": "Experience",
+      "description": "Submitted student interview experiences"
+    },
+    "/questions/{questionId}": {
+      "schema": "Question",
+      "description": "Interview questions bank and repeated question tracker"
+    },
+    "/answers/{answerId}": {
+      "schema": "Answer",
+      "description": "Community solutions and answers to interview questions"
+    },
+    "/admins/{adminUid}": {
+      "schema": "Admin",
+      "description": "Authorized administrators"
+    },
+    "/reports/{reportId}": {
+      "schema": "Report",
+      "description": "Moderation reports"
+    }
+  }
+}

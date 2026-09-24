@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'sahoopitendrakumar@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Test connection doc
+    match /test/{docId} {
+      allow read: if true;
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Admins
+    match /admins/{adminUid} {
+      allow read: if isSignedIn() && (request.auth.uid == adminUid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Companies
+    match /companies/{companyId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Experiences
+    match /experiences/{experienceId} {
+      allow read: if resource.data.status == 'approved' || (isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin()));
+      allow create: if isSignedIn() && (incoming().userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin() || 
+        incoming().diff(existing()).affectedKeys().hasOnly(['upvotes', 'upvotedBy', 'bookmarkedBy'])
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Questions
+    match /questions/{questionId} {
+      allow read: if resource.data.status == 'approved' || (isSignedIn() && isAdmin());
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin();
+    }
+
+    // Answers
+    match /answers/{answerId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (incoming().userId == request.auth.uid || isAdmin());
+      allow update: if isSignedIn();
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Reports
+    match /reports/{reportId} {
+      allow create: if isSignedIn();
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}
