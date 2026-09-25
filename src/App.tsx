@@ -259,7 +259,7 @@ function MainApp() {
   const currentCompany = companies.find((c) => c.id === selectedCompanyId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50 text-slate-900 selection:bg-indigo-100 selection:text-indigo-900 font-sans">
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-slate-900 selection:bg-orange-100 selection:text-orange-900 font-sans">
       {/* Navigation */}
       <Navbar
         currentTab={currentTab}

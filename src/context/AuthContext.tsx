@@ -43,6 +43,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+        const isUserAdmin = Boolean(
+          currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+        );
+        const defaultProfile: UserProfile = {
+          userId: currentUser.uid,
+          name: currentUser.displayName || 'Student',
+          email: currentUser.email || '',
+          college: '',
+          branch: 'Computer Science',
+          degree: 'B.Tech',
+          graduationYear: new Date().getFullYear(),
+          photoURL: currentUser.photoURL || '',
+          role: isUserAdmin ? 'admin' : 'student',
+          createdAt: new Date().toISOString(),
+        };
+
         try {
           const userDocRef = doc(db, 'users', currentUser.uid);
           const userSnap = await getDoc(userDocRef);
@@ -50,34 +66,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (userSnap.exists()) {
             const data = userSnap.data() as UserProfile;
             // Ensure admin check is synced
-            if (currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() && data.role !== 'admin') {
-              await updateDoc(userDocRef, { role: 'admin' });
+            if (isUserAdmin && data.role !== 'admin') {
+              try {
+                await updateDoc(userDocRef, { role: 'admin' });
+              } catch (e) {
+                console.warn('Sync admin role notice:', e);
+              }
               data.role = 'admin';
             }
             setUserProfile(data);
           } else {
             // New user registration
-            const isUserAdmin = currentUser.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase();
-            const newProfile: UserProfile = {
-              userId: currentUser.uid,
-              name: currentUser.displayName || 'Student',
-              email: currentUser.email || '',
-              college: '',
-              branch: 'Computer Science',
-              degree: 'B.Tech',
-              graduationYear: new Date().getFullYear(),
-              photoURL: currentUser.photoURL || '',
-              role: isUserAdmin ? 'admin' : 'student',
-              createdAt: new Date().toISOString(),
-            };
-            await setDoc(userDocRef, newProfile);
-            setUserProfile(newProfile);
+            try {
+              await setDoc(userDocRef, defaultProfile);
+            } catch (setErr) {
+              console.warn('Set initial profile notice:', setErr);
+            }
+            setUserProfile(defaultProfile);
             // Prompt to complete profile
             setIsProfileModalOpen(true);
           }
-        } catch (err) {
-          console.error('Error fetching user profile:', err);
-          handleFirestoreError(err, OperationType.GET, `users/${currentUser.uid}`);
+        } catch (err: any) {
+          const errMsg = err?.message || String(err);
+          const isOffline =
+            errMsg.includes('offline') ||
+            errMsg.includes('unavailable') ||
+            err?.code === 'unavailable';
+
+          if (isOffline) {
+            console.warn('Firestore offline or connecting; falling back to current auth session profile:', errMsg);
+            setUserProfile(defaultProfile);
+          } else {
+            console.error('Error fetching user profile:', err);
+            handleFirestoreError(err, OperationType.GET, `users/${currentUser.uid}`);
+          }
         }
       } else {
         setUserProfile(null);

@@ -1,5 +1,4 @@
 import React from 'react';
-import { GraduationCap, Heart } from 'lucide-react';
 
 interface FooterProps {
   onSelectTab: (tab: string, param?: string) => void;
@@ -7,130 +6,133 @@ interface FooterProps {
 
 export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
   return (
-    <footer className="bg-slate-900 text-slate-400 text-sm border-t border-slate-800 mt-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand info */}
-          <div className="md:col-span-1 space-y-3">
-            <div className="flex items-center gap-2 text-white font-bold text-lg">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-                <GraduationCap className="w-4 h-4" />
+    <footer className="bg-[#FAF8F5] border-t border-[#EAE4DC] mt-16 text-slate-500 text-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-slate-900 font-bold text-base">
+              <div className="w-6 h-6 rounded-md bg-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-2xs">
+                Q
               </div>
-              <span>Interview<span className="text-indigo-400">Hub</span></span>
+              <span>Prep<span className="text-orange-600">Loop</span></span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Student interview intelligence community. Real interview experiences, coding problems, technical rounds, GD topics, and repeated questions shared by university graduates.
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Real interview questions, straight from the room. Students share the exact coding, GD and HR questions they faced.
             </p>
-            <div className="text-[11px] text-slate-500">
-              Built for campus &amp; off-campus placement preparation.
-            </div>
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h4 className="text-xs uppercase font-semibold text-slate-300 tracking-wider mb-3">
-              Explore
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
+              Platform
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-1.5 text-xs">
               <li>
                 <button
                   onClick={() => onSelectTab('companies')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  Top Hiring Companies
+                  Companies
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onSelectTab('questions')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  Technical &amp; Coding Questions
+                  Interview Questions
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onSelectTab('repeated')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  Most Repeated Questions
+                  Repeated Questions
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onSelectTab('experiences')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  Selected &amp; Rejection Experiences
+                  Interview Experiences
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Popular Categories */}
-          <div>
-            <h4 className="text-xs uppercase font-semibold text-slate-300 tracking-wider mb-3">
-              Roles &amp; Tech
+          {/* Core Categories */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
+              Categories
             </h4>
-            <ul className="space-y-2 text-xs">
+            <ul className="space-y-1.5 text-xs">
               <li>
                 <button
                   onClick={() => onSelectTab('questions', 'Coding')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  DSA &amp; Coding Rounds
+                  Coding &amp; Algorithms
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onSelectTab('questions', 'Technical')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  Java, Python &amp; SQL Questions
+                  Core Technical
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onSelectTab('questions', 'Aptitude')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  Quantitative Aptitude &amp; Verbal
+                  Aptitude &amp; Verbal
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => onSelectTab('questions', 'HR')}
-                  className="hover:text-white transition-colors text-left"
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
                 >
-                  HR &amp; Managerial Behaviorals
+                  HR &amp; Behavioral
                 </button>
               </li>
             </ul>
           </div>
 
-          {/* Community Ethics */}
-          <div>
-            <h4 className="text-xs uppercase font-semibold text-slate-300 tracking-wider mb-3">
+          {/* Community */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-semibold text-slate-900 uppercase tracking-wider">
               Community
             </h4>
-            <p className="text-xs text-slate-400 leading-relaxed mb-3">
-              All interview insights are moderated for authenticity and academic honesty. Submissions reflect real university campus placement drives.
-            </p>
-            <div className="flex items-center gap-1.5 text-xs text-slate-500">
-              <span>Made with</span>
-              <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-              <span>for graduating students</span>
-            </div>
+            <ul className="space-y-1.5 text-xs">
+              <li>
+                <button
+                  onClick={() => onSelectTab('community')}
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
+                >
+                  Peer Solutions
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onSelectTab('profile')}
+                  className="hover:text-orange-600 transition-colors cursor-pointer"
+                >
+                  Student Profile &amp; Bookmarks
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
-          <div>
-            © {new Date().getFullYear()} InterviewHub. Real student placement knowledge.
-          </div>
-          <div className="mt-2 sm:mt-0 flex gap-4">
-            <span className="text-slate-400">Zero fake statistics · 100% peer-contributed</span>
-          </div>
+        <div className="mt-8 pt-6 border-t border-[#EAE4DC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+          <p>© {new Date().getFullYear()} PrepLoop. Real student placement intelligence.</p>
+          <p>Built for university graduates &amp; placement cells.</p>
         </div>
       </div>
     </footer>

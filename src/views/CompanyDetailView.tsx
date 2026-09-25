@@ -1,26 +1,14 @@
 import React, { useState } from 'react';
 import {
   ArrowLeft,
-  Building2,
-  FileText,
-  HelpCircle,
-  Code2,
-  Flame,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Filter,
-  GraduationCap,
-  Sparkles,
   PlusCircle,
-  Calendar,
-  Layers,
-  ThumbsUp,
-  Bookmark,
-  Tag
+  HelpCircle,
+  ChevronRight,
+  Filter,
+  Download
 } from 'lucide-react';
-import { Company, InterviewExperience, Question, InterviewType, InterviewResult } from '../types';
-import { useAuth } from '../context/AuthContext';
+import { Company, InterviewExperience, Question } from '../types';
+import { exportExperiencePDF } from '../lib/pdfExport';
 
 interface CompanyDetailViewProps {
   company: Company;
@@ -43,17 +31,11 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
   onSelectExperience,
   onSelectQuestion,
   onOpenSubmit,
-  onUpvoteExperience,
-  onToggleBookmark,
-  onUpvoteQuestion,
 }) => {
-  const { user, isExperienceBookmarked } = useAuth();
   const [roleFilter, setRoleFilter] = useState('All');
-  const [typeFilter, setTypeFilter] = useState<string>('All');
-  const [resultFilter, setResultFilter] = useState<string>('All');
-  const [difficultyFilter, setDifficultyFilter] = useState<string>('All');
-  const [techFilter, setTechFilter] = useState<string>('All');
-  const [tagFilter, setTagFilter] = useState<string>('All');
+  const [resultFilter, setResultFilter] = useState('All');
+  const [typeFilter, setTypeFilter] = useState('All');
+  const [activeTab, setActiveTab] = useState<'experiences' | 'questions'>('experiences');
 
   // Filter approved experiences for this company
   const companyExperiences = experiences.filter(
@@ -62,10 +44,13 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
 
   // Filter questions for this company
   const companyQuestions = questions.filter(
-    (q) => q.companyId === company.id || q.companiesAsked?.includes(company.name) || q.companyName === company.name
+    (q) =>
+      q.companyId === company.id ||
+      q.companiesAsked?.some((c) => c.toLowerCase() === company.name.toLowerCase()) ||
+      q.companyName?.toLowerCase() === company.name.toLowerCase()
   );
 
-  // Compute common technologies dynamically from submitted experiences
+  // Dynamic common technologies
   const techCounts: { [tech: string]: number } = {};
   companyExperiences.forEach((exp) => {
     exp.technologies?.forEach((t) => {
@@ -76,500 +61,276 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
     .sort((a, b) => b[1] - a[1])
     .map(([tech]) => tech);
 
-  // Tags available in this company's experiences
-  const availableTags = Array.from(
-    new Set(companyExperiences.flatMap((e) => e.tags || []))
-  );
+  // Most repeated questions for this company (or sorted by askedCount)
+  const topCompanyQuestions = [...companyQuestions]
+    .sort((a, b) => b.askedCount - a.askedCount)
+    .slice(0, 5);
 
-  // Roles available in this company
   const availableRoles = ['All', ...Array.from(new Set(companyExperiences.map((e) => e.role)))];
 
-  // Apply filters
   const filteredExperiences = companyExperiences.filter((exp) => {
     const matchesRole = roleFilter === 'All' || exp.role === roleFilter;
-    const matchesType = typeFilter === 'All' || exp.interviewType === typeFilter;
     const matchesResult = resultFilter === 'All' || exp.result === resultFilter;
-    const matchesDiff = difficultyFilter === 'All' || exp.difficulty === difficultyFilter;
-    const matchesTech = techFilter === 'All' || exp.technologies?.includes(techFilter);
-    const matchesTag = tagFilter === 'All' || exp.tags?.includes(tagFilter);
-    return matchesRole && matchesType && matchesResult && matchesDiff && matchesTech && matchesTag;
+    const matchesType = typeFilter === 'All' || exp.interviewType === typeFilter;
+    return matchesRole && matchesResult && matchesType;
   });
 
-  const codingQuestionsCount = companyQuestions.filter(q => q.type === 'Coding').length;
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Back button */}
       <button
         onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-3.5 h-3.5" />
         <span>Back to Companies</span>
       </button>
 
-      {/* Company Banner & Profile */}
-      <div className="p-6 sm:p-8 bg-white rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+      {/* Top Company Header */}
+      <div className="p-6 sm:p-7 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-bold text-2xl shadow-md shrink-0">
+            <div className="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-extrabold text-xl shadow-2xs shrink-0">
               {company.name.charAt(0)}
             </div>
             <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
-                  {company.name}
-                </h1>
-                <span className="px-2.5 py-0.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">
-                  {company.category}
-                </span>
-                <span className="px-2.5 py-0.5 text-xs font-semibold rounded-md bg-slate-100 text-slate-700">
-                  {company.type}
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed pt-1">
-                {company.description}
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                {company.name}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                {company.type} · {company.category}
               </p>
+              <div className="flex items-center gap-3 text-xs text-slate-600 pt-1">
+                <span className="font-bold text-slate-900">{companyExperiences.length} Experiences</span>
+                <span>·</span>
+                <span className="font-bold text-slate-900">{companyQuestions.length} Questions</span>
+              </div>
             </div>
           </div>
 
-          <button
-            onClick={() => onOpenSubmit(company.id)}
-            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs rounded-xl shadow-sm flex items-center gap-1.5 self-start shrink-0 transition-all cursor-pointer"
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>+ Share Experience for {company.name.split(' ')[0]}</span>
-          </button>
-        </div>
-
-        {/* Real Dynamic Stats for this Company */}
-        <div className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-3 bg-slate-50 rounded-xl">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Interview Experiences
-            </span>
-            <span className="text-xl font-bold text-slate-900 mt-0.5 block">
-              {companyExperiences.length}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Reported Questions
-            </span>
-            <span className="text-xl font-bold text-indigo-600 mt-0.5 block">
-              {companyQuestions.length}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Coding Problems
-            </span>
-            <span className="text-xl font-bold text-emerald-600 mt-0.5 block">
-              {codingQuestionsCount}
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-50 rounded-xl">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-              Student Views
-            </span>
-            <span className="text-xl font-bold text-slate-700 mt-0.5 block">
-              {company.viewCount}
-            </span>
+          <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
+            <button
+              onClick={() => {
+                const qEl = document.getElementById('company-questions-section');
+                if (qEl) qEl.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-full border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
+            >
+              View Questions
+            </button>
+            <button
+              onClick={() => onOpenSubmit(company.id)}
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-full shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Share Experience</span>
+            </button>
           </div>
         </div>
 
-        {/* Common Technologies for this company */}
+        {/* Statistics Grid */}
+        <div className="pt-4 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center sm:text-left">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+            <span className="text-xs text-slate-500 font-medium block">Experiences</span>
+            <span className="text-lg font-bold text-slate-900 mt-0.5 block">{companyExperiences.length}</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+            <span className="text-xs text-slate-500 font-medium block">Reported Questions</span>
+            <span className="text-lg font-bold text-indigo-600 mt-0.5 block">{companyQuestions.length}</span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+            <span className="text-xs text-slate-500 font-medium block">Coding Rounds</span>
+            <span className="text-lg font-bold text-slate-900 mt-0.5 block">
+              {companyQuestions.filter((q) => q.type === 'Coding').length}
+            </span>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+            <span className="text-xs text-slate-500 font-medium block">Campus Views</span>
+            <span className="text-lg font-bold text-slate-900 mt-0.5 block">{company.viewCount}</span>
+          </div>
+        </div>
+
+        {/* Common Technologies */}
         {commonTechnologies.length > 0 && (
-          <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-              Common Technologies Asked in {company.name}
+          <div className="pt-4 border-t border-slate-100 space-y-2">
+            <span className="text-xs font-semibold text-slate-500 block">
+              Common Technologies:
             </span>
-            <div className="flex flex-wrap gap-2">
-              {commonTechnologies.map((tech) => (
-                <button
+            <div className="flex flex-wrap gap-1.5">
+              {commonTechnologies.slice(0, 8).map((tech) => (
+                <span
                   key={tech}
-                  onClick={() => setTechFilter(techFilter === tech ? 'All' : tech)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                    techFilter === tech
-                      ? 'bg-indigo-600 text-white shadow-2xs font-semibold'
-                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                  }`}
+                  className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-50 text-slate-700 border border-slate-200/60"
                 >
-                  {tech} ({techCounts[tech]})
-                </button>
+                  {tech}
+                </span>
               ))}
-              {techFilter !== 'All' && (
-                <button
-                  onClick={() => setTechFilter('All')}
-                  className="px-2.5 py-1 text-xs text-rose-600 hover:underline font-semibold"
-                >
-                  Clear Tech Filter
-                </button>
-              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* MOST REPEATED QUESTIONS IN THIS COMPANY */}
-      {companyQuestions.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Flame className="w-5 h-5 text-amber-500 fill-amber-500" />
-              Most Repeated Questions at {company.name}
-            </h2>
-            <span className="text-xs text-slate-500">Based on candidate reports</span>
-          </div>
+      {/* Most Repeated Questions (Compact list rows instead of oversized cards) */}
+      <div id="company-questions-section" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+            Most Repeated Questions in {company.name}
+          </h2>
+          <span className="text-xs text-slate-500">{topCompanyQuestions.length} questions</span>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {companyQuestions.slice(0, 4).map((q) => (
+        {topCompanyQuestions.length === 0 ? (
+          <div className="p-4 text-center bg-white rounded-xl border border-slate-200 text-slate-500 text-xs">
+            No repeated questions reported for this company yet.
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-slate-200/90 divide-y divide-slate-100">
+            {topCompanyQuestions.map((q) => (
               <div
                 key={q.id}
                 onClick={() => onSelectQuestion(q)}
-                className="p-4 bg-white rounded-xl border border-slate-200 hover:border-indigo-300 hover:shadow-2xs transition-all cursor-pointer group flex flex-col justify-between"
+                className="p-3.5 hover:bg-slate-50/80 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
               >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-100 text-slate-700">
-                      {q.type} {q.technology ? `· ${q.technology}` : ''}
-                    </span>
-                    <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5 fill-amber-500" />
-                      Asked {q.askedCount}x
-                    </span>
-                  </div>
-                  <h4 className="font-semibold text-slate-900 text-xs sm:text-sm group-hover:text-indigo-600 transition-colors line-clamp-2">
+                <div className="space-y-1 min-w-0">
+                  <h3 className="text-sm font-medium text-slate-900 group-hover:text-indigo-600 transition-colors truncate">
                     {q.questionText}
-                  </h4>
-                </div>
-                <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <div className="flex items-center gap-2">
-                    <span>{q.difficulty || 'Medium'}</span>
-                    {onUpvoteQuestion && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onUpvoteQuestion(q);
-                        }}
-                        className={`px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
-                          user && q.upvotedBy?.includes(user.uid)
-                            ? 'bg-indigo-600 text-white'
-                            : 'bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600'
-                        }`}
-                        title="Upvote question"
-                      >
-                        <ThumbsUp className={`w-2.5 h-2.5 ${user && q.upvotedBy?.includes(user.uid) ? 'fill-white text-white' : 'text-slate-400'}`} />
-                        <span>{q.upvotes || 0}</span>
-                      </button>
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                    <span className="font-medium text-slate-700">{q.type}</span>
+                    {q.technology && (
+                      <>
+                        <span>·</span>
+                        <span>{q.technology}</span>
+                      </>
+                    )}
+                    {q.companiesAsked && q.companiesAsked.length > 0 && (
+                      <>
+                        <span>·</span>
+                        <span className="text-slate-500">
+                          {q.companiesAsked.slice(0, 3).join(' · ')}
+                        </span>
+                      </>
                     )}
                   </div>
-                  <span className="text-indigo-600 font-semibold group-hover:translate-x-0.5 transition-transform">
-                    View Solution →
+                </div>
+
+                <div className="flex items-center gap-2.5 self-end sm:self-center shrink-0">
+                  <span className="px-2 py-0.5 text-[11px] font-medium text-slate-600 bg-slate-100 rounded">
+                    Asked {q.askedCount} times
                   </span>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ALL INTERVIEW EXPERIENCES */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">
-              Candidate Experiences ({companyExperiences.length})
-            </h2>
-            <p className="text-xs text-slate-500">
-              All approved student experiences for {company.name} — both selections and rejections
-            </p>
-          </div>
+      {/* Interview Experiences Section */}
+      <div className="space-y-3 pt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900">
+            Interview Experiences ({filteredExperiences.length})
+          </h2>
 
-          <span className="text-xs font-medium text-slate-500">
-            Showing {filteredExperiences.length} of {companyExperiences.length}
-          </span>
-        </div>
-
-        {/* Filter Controls Bar */}
-        <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-3 text-xs">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-slate-400 font-semibold flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" />
-              Filter by:
-            </span>
-
-            {/* Role Filter */}
-            {availableRoles.length > 2 && (
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 outline-none"
-              >
-                {availableRoles.map((r) => (
-                  <option key={r} value={r}>
-                    Role: {r}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {/* Interview Type Filter */}
+          {/* Quick Filter controls */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
             <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 outline-none"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs text-slate-700 outline-none"
             >
-              <option value="All">All Types</option>
-              <option value="Campus">Campus</option>
-              <option value="Off-campus">Off-Campus</option>
-              <option value="Internship">Internship</option>
-              <option value="PPO">PPO</option>
+              {availableRoles.map((r) => (
+                <option key={r} value={r}>
+                  {r === 'All' ? 'All Roles' : r}
+                </option>
+              ))}
             </select>
 
-            {/* Result Filter */}
             <select
               value={resultFilter}
               onChange={(e) => setResultFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 outline-none"
+              className="px-2.5 py-1 bg-white border border-slate-200 rounded-md text-xs text-slate-700 outline-none"
             >
               <option value="All">All Results</option>
               <option value="Selected">Selected</option>
               <option value="Not Selected">Not Selected</option>
-              <option value="Waitlisted">Waitlisted</option>
             </select>
-
-            {/* Difficulty Filter */}
-            <select
-              value={difficultyFilter}
-              onChange={(e) => setDifficultyFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 outline-none"
-            >
-              <option value="All">All Difficulties</option>
-              <option value="Easy">Easy</option>
-              <option value="Moderate">Moderate</option>
-              <option value="Difficult">Difficult</option>
-            </select>
-
-            {/* Domain & Skill Tag Filter */}
-            {availableTags.length > 0 && (
-              <select
-                value={tagFilter}
-                onChange={(e) => setTagFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50/50 text-indigo-900 font-medium outline-none"
-              >
-                <option value="All">All Domains &amp; Skills</option>
-                {availableTags.map((t) => (
-                  <option key={t} value={t}>
-                    Tag: #{t}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {(roleFilter !== 'All' || typeFilter !== 'All' || resultFilter !== 'All' || difficultyFilter !== 'All' || techFilter !== 'All' || tagFilter !== 'All') && (
-              <button
-                onClick={() => {
-                  setRoleFilter('All');
-                  setTypeFilter('All');
-                  setResultFilter('All');
-                  setDifficultyFilter('All');
-                  setTechFilter('All');
-                  setTagFilter('All');
-                }}
-                className="text-xs text-rose-600 hover:underline font-semibold"
-              >
-                Reset All Filters
-              </button>
-            )}
           </div>
         </div>
 
-        {/* Experience Cards List */}
+        {/* Clean cards / list rows for experiences */}
         {filteredExperiences.length === 0 ? (
-          <div className="p-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-300 space-y-3">
-            <FileText className="w-10 h-10 text-slate-400 mx-auto" />
-            <h3 className="font-bold text-slate-800 text-base">
-              No experiences match the selected criteria
-            </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              Reset your filters or be the first student to share an experience for this role!
-            </p>
-            <button
-              onClick={() => onOpenSubmit(company.id)}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold cursor-pointer"
-            >
-              + Share Experience
-            </button>
+          <div className="p-8 text-center bg-white rounded-xl border border-slate-200 text-slate-500 text-xs">
+            No interview experiences found for this filter.
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredExperiences.map((exp, idx) => {
-              const isSelected = exp.result === 'Selected';
-              const isNotSelected = exp.result === 'Not Selected';
-
-              return (
-                <div
-                  key={exp.id}
-                  onClick={() => onSelectExperience(exp)}
-                  className="p-6 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group space-y-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-slate-900 text-base sm:text-lg group-hover:text-indigo-600 transition-colors">
-                          {exp.role}
-                        </span>
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded-md bg-slate-100 text-slate-700">
-                          {exp.interviewType}
-                        </span>
-                        <span className="text-slate-400">·</span>
-                        <span className="text-xs text-slate-500">Year {exp.year}</span>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-                        <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="font-medium text-slate-700">
-                          {exp.authorName} ({exp.authorCollege || 'Campus Placement'})
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 self-start">
-                      <span className={`px-2.5 py-1 text-xs font-bold rounded-full ${
-                        isSelected
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : isNotSelected
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                      }`}>
-                        {exp.result}
-                      </span>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-md ${
-                        exp.difficulty === 'Difficult'
-                          ? 'bg-rose-50 text-rose-600'
-                          : exp.difficulty === 'Easy'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-amber-50 text-amber-600'
-                      }`}>
-                        {exp.difficulty}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Rounds Flow Preview */}
-                  <div className="p-3 bg-slate-50 rounded-xl flex flex-wrap items-center gap-2 text-xs text-slate-700">
-                    <span className="font-bold text-slate-800 flex items-center gap-1">
-                      <Layers className="w-3.5 h-3.5 text-indigo-600" />
-                      Rounds:
+          <div className="space-y-3">
+            {filteredExperiences.map((exp) => (
+              <div
+                key={exp.id}
+                onClick={() => onSelectExperience(exp)}
+                className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer group space-y-2.5"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                      {exp.role}
+                    </h3>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-xs text-slate-500">{exp.interviewType}</span>
+                    <span className="text-slate-400">·</span>
+                    <span className="text-xs text-slate-500">
+                      {exp.year || new Date(exp.createdAt).getFullYear()}
                     </span>
-                    {exp.rounds.map((r, rIdx) => (
-                      <React.Fragment key={rIdx}>
-                        <span className="px-2 py-0.5 bg-white border border-slate-200 rounded font-medium">
-                          {r.roundName}
-                        </span>
-                        {rIdx < exp.rounds.length - 1 && (
-                          <span className="text-slate-400">→</span>
-                        )}
-                      </React.Fragment>
-                    ))}
                   </div>
 
-                  {/* Experience text snippet */}
-                  <p className="text-xs sm:text-sm text-slate-600 line-clamp-2 leading-relaxed italic">
-                    "{exp.experienceText}"
-                  </p>
+                  <span
+                    className={`px-2 py-0.5 text-[11px] font-medium rounded self-start sm:self-auto ${
+                      exp.result === 'Selected'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    {exp.result}
+                  </span>
+                </div>
 
-                  {/* Domain & Skill Tags */}
-                  {exp.tags && exp.tags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1 mr-0.5">
-                        <Tag className="w-3 h-3 text-indigo-500" />
-                        Tags:
-                      </span>
-                      {exp.tags.map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setTagFilter(tagFilter === tag ? 'All' : tag);
-                          }}
-                          className={`px-2 py-0.5 text-[11px] font-medium rounded-md transition-all cursor-pointer ${
-                            tagFilter === tag
-                              ? 'bg-indigo-600 text-white font-semibold shadow-2xs'
-                              : 'bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 border border-indigo-100/90'
-                          }`}
-                          title={`Filter company interviews by #${tag}`}
-                        >
-                          #{tag}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {exp.experienceText}
+                </p>
 
-                  {/* Technologies, Upvote, Bookmark & View Details */}
-                  <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {onUpvoteExperience && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onUpvoteExperience(exp);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            user && exp.upvotedBy?.includes(user.uid)
-                              ? 'bg-indigo-600 text-white'
-                              : 'bg-slate-100 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700'
-                          }`}
-                          title="Upvote as helpful"
-                        >
-                          <ThumbsUp className={`w-3 h-3 ${user && exp.upvotedBy?.includes(user.uid) ? 'fill-white text-white' : 'text-slate-400'}`} />
-                          <span>{exp.upvotes || 0}</span>
-                        </button>
-                      )}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-medium text-slate-700">{exp.rounds.length} Rounds</span>
+                    {exp.technologies && exp.technologies.length > 0 && (
+                      <>
+                        <span>·</span>
+                        <span>{exp.technologies.join(' · ')}</span>
+                      </>
+                    )}
+                  </div>
 
-                      {onToggleBookmark && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleBookmark(exp);
-                          }}
-                          className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-                            isExperienceBookmarked(exp.id)
-                              ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                              : 'bg-slate-100 hover:bg-amber-50 text-slate-700 hover:text-amber-800'
-                          }`}
-                          title={isExperienceBookmarked(exp.id) ? 'Saved in your bookmarks' : 'Save to bookmarks'}
-                        >
-                          <Bookmark className={`w-3 h-3 ${isExperienceBookmarked(exp.id) ? 'fill-amber-500 text-amber-600' : 'text-slate-400'}`} />
-                          <span>{isExperienceBookmarked(exp.id) ? 'Saved' : 'Bookmark'}</span>
-                        </button>
-                      )}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportExperiencePDF(exp);
+                      }}
+                      title="Download PDF brief"
+                      className="p-1 rounded text-slate-400 hover:text-indigo-600 hover:bg-slate-100 transition-colors flex items-center gap-1 text-[11px]"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-500 hover:text-indigo-600" />
+                      <span className="hidden sm:inline">PDF</span>
+                    </button>
 
-                      <div className="hidden sm:flex flex-wrap gap-1.5 ml-1">
-                        {exp.technologies.slice(0, 3).map((t) => (
-                          <span
-                            key={t}
-                            className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <span className="text-indigo-600 font-bold group-hover:translate-x-1 transition-transform flex items-center gap-1 ml-auto">
-                      <span>Read Full Breakdown</span>
-                      <span>→</span>
+                    <span className="text-indigo-600 font-medium group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                      View breakdown →
                     </span>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </div>

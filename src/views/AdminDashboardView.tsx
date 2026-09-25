@@ -5,12 +5,8 @@ import {
   XCircle,
   FileText,
   Building2,
-  HelpCircle,
-  Layers,
   Database,
-  Plus,
-  RefreshCw,
-  AlertCircle
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
@@ -25,7 +21,7 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
-import { InterviewExperience, Company, Question } from '../types';
+import { InterviewExperience, Company } from '../types';
 import { checkAndSeedInitialData } from '../lib/seedData';
 
 interface AdminDashboardViewProps {
@@ -78,8 +74,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
   if (!isAdmin) {
     return (
       <div className="max-w-md mx-auto px-4 py-24 text-center space-y-3">
-        <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto" />
-        <h2 className="text-xl font-bold text-slate-900">Admin Authorization Required</h2>
+        <ShieldAlert className="w-10 h-10 text-rose-500 mx-auto" />
+        <h2 className="text-lg font-bold text-slate-900">Admin Authorization Required</h2>
         <p className="text-xs text-slate-500">
           This moderation dashboard is strictly restricted to verified placement administrators.
         </p>
@@ -170,23 +166,23 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Top Banner */}
-      <div className="p-6 bg-slate-900 text-white rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 bg-slate-900 text-white rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-rose-400 font-bold text-xs uppercase tracking-wider mb-1">
-            <ShieldAlert className="w-4 h-4" />
+          <div className="flex items-center gap-1.5 text-rose-400 font-semibold text-[11px] uppercase tracking-wider mb-1">
+            <ShieldAlert className="w-3.5 h-3.5" />
             <span>Placement Moderation Dashboard</span>
           </div>
-          <h1 className="text-2xl font-bold">Admin Portal</h1>
+          <h1 className="text-xl font-bold">Admin Portal</h1>
           <p className="text-xs text-slate-400 mt-0.5">
-            Logged in as verified administrator: <span className="text-white font-mono">{user?.email}</span>
+            Logged in as administrator: <span className="text-slate-200 font-mono">{user?.email}</span>
           </p>
         </div>
 
         <button
           onClick={fetchAdminData}
-          className="px-3.5 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl flex items-center gap-1.5 self-start sm:self-auto"
+          className="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg flex items-center gap-1.5 self-start sm:self-auto transition-colors"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Refresh Data</span>
@@ -194,13 +190,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs font-bold">
+      <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2 text-xs">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors ${
+          className={`px-3 py-1.5 rounded-md font-medium flex items-center gap-1.5 transition-colors ${
             activeTab === 'pending'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
+              ? 'bg-indigo-50 text-indigo-700 font-semibold'
+              : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -209,10 +205,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
 
         <button
           onClick={() => setActiveTab('companies')}
-          className={`px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors ${
+          className={`px-3 py-1.5 rounded-md font-medium flex items-center gap-1.5 transition-colors ${
             activeTab === 'companies'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
+              ? 'bg-indigo-50 text-indigo-700 font-semibold'
+              : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -221,10 +217,10 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
 
         <button
           onClick={() => setActiveTab('seed')}
-          className={`px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors ${
+          className={`px-3 py-1.5 rounded-md font-medium flex items-center gap-1.5 transition-colors ${
             activeTab === 'seed'
-              ? 'bg-slate-900 text-white'
-              : 'text-slate-600 hover:bg-slate-100'
+              ? 'bg-indigo-50 text-indigo-700 font-semibold'
+              : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <Database className="w-3.5 h-3.5" />
@@ -236,63 +232,51 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
       {activeTab === 'pending' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900">
               Student Submissions Awaiting Approval
             </h2>
             <span className="text-xs text-slate-500">
-              Only approved experiences appear publicly on company pages
+              Approved experiences appear publicly
             </span>
           </div>
 
           {loading ? (
             <div className="py-12 text-center text-xs text-slate-400">Loading pending items...</div>
           ) : pendingExperiences.length === 0 ? (
-            <div className="p-8 bg-slate-50 rounded-2xl border border-dashed border-slate-300 text-center space-y-1">
-              <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto" />
-              <p className="text-xs font-semibold text-slate-800">All submissions have been moderated!</p>
-              <p className="text-[11px] text-slate-500">No new student experiences in queue.</p>
+            <div className="p-8 bg-white rounded-xl border border-slate-200 text-center text-xs text-slate-500">
+              No pending student submissions waiting for approval.
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {pendingExperiences.map((exp) => (
                 <div
                   key={exp.id}
-                  className="p-6 bg-white rounded-2xl border border-amber-200 shadow-2xs space-y-4"
+                  className="p-4 bg-white rounded-xl border border-slate-200/90 space-y-3"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-base">
-                          {exp.companyName}
-                        </span>
-                        <span className="text-slate-400">·</span>
-                        <span className="text-xs font-semibold text-slate-700">
-                          {exp.role} ({exp.interviewType})
-                        </span>
-                        <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">
-                          Pending Moderation
-                        </span>
-                      </div>
-                      <div className="text-xs text-slate-500 mt-1">
-                        Submitted by: <strong className="text-slate-700">{exp.authorName}</strong> ({exp.authorCollege || 'Campus'}) · Year {exp.year}
-                      </div>
+                      <h3 className="font-semibold text-slate-900 text-sm">
+                        {exp.companyName} · {exp.role}
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        {exp.authorCollege || 'Campus drive'} · {exp.interviewType} · {exp.result}
+                      </p>
                     </div>
 
-                    {/* Approve / Reject Controls */}
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2">
                       <button
-                        disabled={processingId === exp.id}
                         onClick={() => handleApprove(exp)}
-                        className="px-3.5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg flex items-center gap-1 shadow-2xs transition-colors"
+                        disabled={processingId === exp.id}
+                        className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors"
                       >
                         <CheckCircle className="w-3.5 h-3.5" />
                         <span>Approve</span>
                       </button>
 
                       <button
-                        disabled={processingId === exp.id}
                         onClick={() => handleReject(exp)}
-                        className="px-3.5 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-1 border border-rose-200 transition-colors"
+                        disabled={processingId === exp.id}
+                        className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors"
                       >
                         <XCircle className="w-3.5 h-3.5" />
                         <span>Reject</span>
@@ -300,14 +284,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
                     </div>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-700 leading-relaxed bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                  <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
                     "{exp.experienceText}"
                   </p>
-
-                  <div className="text-xs text-slate-600">
-                    <span className="font-semibold text-slate-800">Rounds Reported: </span>
-                    {exp.rounds.map(r => `${r.roundName} (${r.questions.length} questions)`).join(' → ')}
-                  </div>
                 </div>
               ))}
             </div>
@@ -317,117 +296,111 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
 
       {/* Tab 2: Manage Companies */}
       {activeTab === 'companies' && (
-        <div className="space-y-6">
-          {/* Add Company Form */}
-          <form
-            onSubmit={handleCreateCompany}
-            className="p-6 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-4"
-          >
-            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-              <Plus className="w-4 h-4 text-indigo-600" />
-              Add New Company to Catalog
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-1 p-5 bg-white rounded-xl border border-slate-200/90 space-y-3">
+            <h3 className="font-semibold text-slate-900 text-sm">Add New Company</h3>
+            <form onSubmit={handleCreateCompany} className="space-y-3 text-xs">
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Company Name *</label>
+                <label className="block font-medium text-slate-700 mb-1">Company Name</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Tech Mahindra / Oracle"
+                  placeholder="e.g. Oracle, Cisco, Adobe"
                   value={newCompName}
                   onChange={(e) => setNewCompName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 outline-none"
+                  className="w-full p-2 bg-white rounded border border-slate-200 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Category</label>
+                <label className="block font-medium text-slate-700 mb-1">Category</label>
                 <select
                   value={newCompCategory}
                   onChange={(e) => setNewCompCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 outline-none bg-white"
+                  className="w-full p-2 bg-white rounded border border-slate-200 outline-none"
                 >
                   <option value="Software Engineering">Software Engineering</option>
                   <option value="Data Analytics">Data Analytics</option>
+                  <option value="AI/ML">AI/ML</option>
                   <option value="Cloud">Cloud</option>
                   <option value="Consulting">Consulting</option>
                 </select>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Type</label>
+                <label className="block font-medium text-slate-700 mb-1">Type</label>
                 <select
                   value={newCompType}
                   onChange={(e) => setNewCompType(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 outline-none bg-white"
+                  className="w-full p-2 bg-white rounded border border-slate-200 outline-none"
                 >
-                  <option value="Service">Service</option>
                   <option value="Product">Product</option>
+                  <option value="Service">Service</option>
                   <option value="Startup">Startup</option>
                   <option value="Consulting">Consulting</option>
+                  <option value="Government/PSU">Government/PSU</option>
                 </select>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
-              <input
-                type="text"
-                placeholder="Brief summary of company and recruitment..."
-                value={newCompDesc}
-                onChange={(e) => setNewCompDesc(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 outline-none"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-2xs"
-            >
-              Add Company
-            </button>
-          </form>
-
-          {/* List Companies */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {allCompanies.map((c) => (
-              <div key={c.id} className="p-4 bg-white rounded-xl border border-slate-200 space-y-1">
-                <span className="font-bold text-slate-900 text-sm block">{c.name}</span>
-                <span className="text-xs text-indigo-600 font-medium block">{c.category} · {c.type}</span>
-                <div className="text-[11px] text-slate-500 pt-2 border-t border-slate-100 flex justify-between">
-                  <span>{c.experienceCount} Experiences</span>
-                  <span>{c.viewCount} Views</span>
-                </div>
+              <div>
+                <label className="block font-medium text-slate-700 mb-1">Description</label>
+                <textarea
+                  rows={2}
+                  value={newCompDesc}
+                  onChange={(e) => setNewCompDesc(e.target.value)}
+                  placeholder="Brief description of campus roles..."
+                  className="w-full p-2 bg-white rounded border border-slate-200 outline-none"
+                />
               </div>
-            ))}
+
+              <button
+                type="submit"
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded transition-colors"
+              >
+                Add Company
+              </button>
+            </form>
+          </div>
+
+          <div className="md:col-span-2 space-y-3">
+            <h3 className="font-semibold text-slate-900 text-sm">Existing Companies ({allCompanies.length})</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {allCompanies.map((c) => (
+                <div key={c.id} className="p-3 bg-white rounded-lg border border-slate-200/90 text-xs space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-slate-900">{c.name}</span>
+                    <span className="px-1.5 py-0.5 text-[10px] bg-slate-100 rounded text-slate-600">
+                      {c.type}
+                    </span>
+                  </div>
+                  <p className="text-slate-500 line-clamp-1">{c.description}</p>
+                  <p className="text-[11px] text-slate-400 pt-1">
+                    {c.experienceCount} exp · {c.questionCount} questions
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Tab 3: Seed Data */}
+      {/* Tab 3: Seed Initial Data */}
       {activeTab === 'seed' && (
-        <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-4 max-w-xl">
-          <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-            <Database className="w-5 h-5 text-indigo-600" />
-            Seed Initial Placement Drives &amp; Questions
-          </h3>
-
-          <p className="text-xs text-slate-600 leading-relaxed">
-            Populates Firestore with authentic student interview experiences (TCS, Infosys, Amazon, Deloitte, Google), full round breakdowns, real questions with code solutions, and verified community answers.
+        <div className="p-5 bg-white rounded-xl border border-slate-200/90 max-w-xl space-y-3 text-xs">
+          <h3 className="font-semibold text-slate-900 text-sm">Database Seeder</h3>
+          <p className="text-slate-600 leading-relaxed">
+            Ensure initial placement datasets (TCS, Infosys, Deloitte, Amazon, Google, Accenture) and repeated questions are present in your Firestore collection.
           </p>
-
           <button
             onClick={handleTriggerSeed}
-            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-all"
+            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-medium transition-colors"
           >
-            Run Community Seeding
+            Run Initial Data Seeder
           </button>
-
           {seedStatus && (
-            <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-800 font-medium">
+            <p className="p-2.5 bg-slate-50 rounded border border-slate-200 text-indigo-700 font-medium">
               {seedStatus}
-            </div>
+            </p>
           )}
         </div>
       )}

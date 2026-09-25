@@ -1351,7 +1351,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-5 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               Next Step
               <ChevronRight className="w-4 h-4" />
@@ -1361,7 +1361,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               type="button"
               disabled={submitting}
               onClick={handleSubmit}
-              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-full shadow-xs flex items-center gap-2 transition-all cursor-pointer"
             >
               {submitting ? (
                 <span>Submitting...</span>

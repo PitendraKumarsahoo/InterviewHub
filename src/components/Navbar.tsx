@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Compass,
-  Building2,
-  HelpCircle,
-  FileText,
-  Flame,
-  Users,
   Search,
   PlusCircle,
   ShieldAlert,
@@ -35,59 +29,50 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { id: 'home', label: 'Home', icon: Compass },
-    { id: 'companies', label: 'Companies', icon: Building2 },
-    { id: 'questions', label: 'Questions', icon: HelpCircle },
-    { id: 'experiences', label: 'Experiences', icon: FileText },
-    { id: 'repeated', label: 'Repeated', icon: Flame, badge: 'Hot' },
-    { id: 'community', label: 'Community', icon: Users },
+    { id: 'home', label: 'Home' },
+    { id: 'companies', label: 'Companies' },
+    { id: 'questions', label: 'Categories' },
+    { id: 'experiences', label: 'Top answers' },
+    { id: 'repeated', label: 'Repeats' },
+    { id: 'community', label: 'Community' },
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+    <header className="sticky top-0 z-40 w-full h-16 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#EAE4DC]/80 transition-all">
+      <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-full">
+          {/* Brand Logo & Desktop Nav */}
           <div className="flex items-center gap-8">
+            {/* Logo */}
             <button
               onClick={() => onSelectTab('home')}
-              className="flex items-center gap-2.5 group text-left cursor-pointer"
+              className="flex items-center gap-2.5 text-left cursor-pointer group"
             >
-              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-                <GraduationCap className="w-5 h-5 text-indigo-400" />
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-base shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                Q
               </div>
-              <div>
-                <span className="text-xl font-bold tracking-tight text-slate-900 flex items-center gap-1.5">
-                  Interview<span className="text-indigo-600">Hub</span>
-                </span>
-                <span className="block text-[10px] uppercase font-semibold tracking-wider text-slate-500">
-                  Student Intelligence
+              <div className="flex flex-col leading-none">
+                <span className="text-xl font-bold tracking-tight text-slate-900">
+                  Prep<span className="text-orange-600">Loop</span>
                 </span>
               </div>
             </button>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
               {navLinks.map((link) => {
-                const Icon = link.icon;
                 const isActive = currentTab === link.id;
                 return (
                   <button
                     key={link.id}
                     onClick={() => onSelectTab(link.id)}
-                    className={`relative px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                       isActive
-                        ? 'text-indigo-600 bg-indigo-50/70 font-semibold'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        ? 'text-orange-600 font-semibold'
+                        : 'text-slate-600 hover:text-slate-900'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
                     {link.label}
-                    {link.badge && (
-                      <span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-100 rounded-full">
-                        {link.badge}
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -96,15 +81,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Items */}
           <div className="flex items-center gap-3">
-            {/* Global Search Trigger */}
+            {/* Search Trigger */}
             <button
               onClick={onOpenSearch}
-              className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500 bg-slate-100 hover:bg-slate-200/80 rounded-lg border border-slate-200 transition-colors"
-              title="Search companies, roles, technologies..."
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500 bg-white hover:bg-[#F3EFE9] rounded-full border border-[#EAE4DC] shadow-2xs transition-colors"
+              title="Search (⌘K)"
             >
               <Search className="w-3.5 h-3.5 text-slate-400" />
               <span>Search...</span>
-              <kbd className="ml-1 px-1.5 py-0.5 text-[10px] font-mono text-slate-500 bg-white rounded border border-slate-200 shadow-2xs">
+              <kbd className="ml-1 px-1.5 py-0.2 text-[9px] font-mono text-slate-400 bg-[#F3EFE9] rounded border border-[#EAE4DC]">
                 ⌘K
               </kbd>
             </button>
@@ -112,29 +97,45 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Mobile Search Icon */}
             <button
               onClick={onOpenSearch}
-              className="sm:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-full"
               aria-label="Search"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-4 h-4" />
             </button>
 
-            {/* Submit Experience Button */}
+            {/* Sign in / Sign out text link */}
+            {user ? (
+              <button
+                onClick={logout}
+                className="hidden sm:inline-block text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-1 py-1"
+              >
+                Sign out
+              </button>
+            ) : (
+              <button
+                onClick={signInWithGoogle}
+                className="hidden sm:inline-block text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors px-1 py-1"
+              >
+                Sign in
+              </button>
+            )}
+
+            {/* Orange Pill CTA: Share experience (Matching Screenshot) */}
             <button
               onClick={onOpenSubmit}
-              className="hidden lg:flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-sm transition-all"
+              className="flex items-center gap-1.5 px-5 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 active:bg-orange-800 rounded-full shadow-xs transition-all cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Submit Experience</span>
+              <span>Share experience</span>
             </button>
 
-            {/* Admin Badge/Link */}
+            {/* Admin (where appropriate) */}
             {isAdmin && (
               <button
                 onClick={() => onSelectTab('admin')}
-                className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                className={`hidden md:flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border transition-colors ${
                   currentTab === 'admin'
-                    ? 'bg-rose-50 text-rose-700 border-rose-300'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : 'bg-white text-slate-600 border-[#EAE4DC] hover:bg-[#F3EFE9]'
                 }`}
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
@@ -142,25 +143,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* User Profile / Login */}
-            {user ? (
+            {/* User Profile avatar */}
+            {user && (
               <div className="relative">
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  className="flex items-center gap-1.5 p-0.5 rounded-full hover:ring-2 hover:ring-slate-300 transition-all"
+                  title={user.displayName || 'Profile'}
                 >
                   {user.photoURL ? (
                     <img
                       src={user.photoURL}
                       alt={user.displayName || 'User'}
-                      className="w-8 h-8 rounded-full border border-slate-200 object-cover"
+                      className="w-7 h-7 rounded-full border border-slate-200 object-cover"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">
+                    <div className="w-7 h-7 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs">
                       {user.displayName?.charAt(0) || 'U'}
                     </div>
                   )}
-                  <span className="hidden xl:inline text-xs font-medium text-slate-700 max-w-[100px] truncate">
+                  <span className="hidden lg:inline text-xs font-medium text-slate-700 max-w-[80px] truncate">
                     {user.displayName?.split(' ')[0]}
                   </span>
                 </button>
@@ -172,17 +174,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="fixed inset-0 z-40"
                       onClick={() => setIsUserMenuOpen(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50 text-sm animate-in fade-in zoom-in-95">
-                      <div className="px-4 py-2 border-b border-slate-100">
+                    <div className="absolute right-0 mt-1.5 w-52 bg-white rounded-lg shadow-md border border-slate-200 py-1 z-50 text-xs animate-in fade-in zoom-in-95">
+                      <div className="px-3 py-2 border-b border-slate-100">
                         <p className="font-semibold text-slate-900 truncate">
                           {user.displayName || 'Student'}
                         </p>
-                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
-                        {userProfile?.college && (
-                          <p className="text-[11px] text-indigo-600 truncate mt-0.5">
-                            {userProfile.college}
-                          </p>
-                        )}
+                        <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
                       </div>
 
                       <button
@@ -190,10 +187,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                           setIsUserMenuOpen(false);
                           onSelectTab('profile');
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
                       >
-                        <UserIcon className="w-4 h-4 text-slate-400" />
-                        My Profile &amp; Contributions
+                        <UserIcon className="w-3.5 h-3.5 text-slate-400" />
+                        My Profile &amp; Bookmarks
                       </button>
 
                       <button
@@ -201,9 +198,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                           setIsUserMenuOpen(false);
                           setIsProfileModalOpen(true);
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
                       >
-                        <GraduationCap className="w-4 h-4 text-slate-400" />
+                        <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
                         Edit College Info
                       </button>
 
@@ -213,123 +210,80 @@ export const Navbar: React.FC<NavbarProps> = ({
                             setIsUserMenuOpen(false);
                             onSelectTab('admin');
                           }}
-                          className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-rose-600 font-medium"
+                          className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-rose-700 font-medium"
                         >
-                          <ShieldAlert className="w-4 h-4 text-rose-500" />
-                          Admin Moderation
+                          <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                          Admin Panel
                         </button>
                       )}
 
-                      <div className="border-t border-slate-100 my-1" />
+                      <div className="border-t border-slate-100 my-0.5" />
 
                       <button
                         onClick={() => {
                           setIsUserMenuOpen(false);
                           logout();
                         }}
-                        className="w-full text-left px-4 py-2 hover:bg-rose-50 flex items-center gap-2 text-rose-600"
+                        className="w-full text-left px-3 py-1.5 hover:bg-slate-50 flex items-center gap-2 text-slate-600"
                       >
-                        <LogOut className="w-4 h-4 text-rose-500" />
+                        <LogOut className="w-3.5 h-3.5 text-slate-400" />
                         Sign Out
                       </button>
                     </div>
                   </>
                 )}
               </div>
-            ) : (
-              <button
-                onClick={signInWithGoogle}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg shadow-2xs transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.24v3.15C3.26 21.36 7.33 24 12 24z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.24C.45 8.16 0 9.97 0 12s.45 3.84 1.24 5.42l4.04-3.15z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.24 6.58l4.04 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                  />
-                </svg>
-                <span>Google Sign In</span>
-              </button>
             )}
 
-            {/* Mobile Hamburger Toggle */}
+            {/* Mobile Hamburger */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100"
-              aria-label="Toggle navigation menu"
+              className="md:hidden p-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md"
+              aria-label="Toggle Navigation"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu Drawer */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-1">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = currentTab === link.id;
-            return (
-              <button
-                key={link.id}
-                onClick={() => {
-                  onSelectTab(link.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium flex items-center justify-between ${
-                  isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span className="flex items-center gap-2.5">
-                  <Icon className="w-4 h-4 text-slate-400" />
-                  {link.label}
-                </span>
-                {link.badge && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold text-amber-700 bg-amber-100 rounded-full">
-                    {link.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        {/* Mobile Navigation Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-[#EAE4DC] bg-[#FAF8F5] py-2 px-1 space-y-1">
+            {navLinks.map((link) => {
+              const isActive = currentTab === link.id;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => {
+                    onSelectTab(link.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs font-medium rounded-md flex items-center justify-between ${
+                    isActive
+                      ? 'text-orange-700 bg-orange-50 font-semibold'
+                      : 'text-slate-700 hover:bg-[#F3EFE9]'
+                  }`}
+                >
+                  <span>{link.label}</span>
+                </button>
+              );
+            })}
 
-          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onOpenSubmit();
-              }}
-              className="w-full py-2.5 px-3 text-center text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm"
-            >
-              + Submit Experience
-            </button>
-
-            {isAdmin && (
+            <div className="pt-2 border-t border-[#EAE4DC]">
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  onSelectTab('admin');
+                  onOpenSubmit();
                 }}
-                className="w-full py-2 px-3 text-center text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg"
+                className="w-full px-3 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-full flex items-center justify-center gap-1.5 shadow-xs"
               >
-                Admin Moderation
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>Share Experience</span>
               </button>
-            )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 };
