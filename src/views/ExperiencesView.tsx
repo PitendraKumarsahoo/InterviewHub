@@ -86,7 +86,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
 
         <button
           onClick={onOpenSubmit}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-full shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
         >
           Share Experience
         </button>
@@ -100,7 +100,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
           placeholder="Search experiences by company, role, or keywords..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
         />
       </div>
 
@@ -109,7 +109,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         <select
           value={companyFilter}
           onChange={(e) => setCompanyFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {allCompanies.map((c) => (
             <option key={c} value={c}>
@@ -121,7 +121,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {allRoles.map((r) => (
             <option key={r} value={r}>
@@ -133,7 +133,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         <select
           value={yearFilter}
           onChange={(e) => setYearFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {allYears.map((y) => (
             <option key={y} value={y}>
@@ -145,7 +145,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         <select
           value={resultFilter}
           onChange={(e) => setResultFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           <option value="All">All Results</option>
           <option value="Selected">Selected</option>
@@ -155,7 +155,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           <option value="All">All Types</option>
           <option value="Campus">Campus</option>
@@ -166,7 +166,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         <select
           value={techFilter}
           onChange={(e) => setTechFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {allTechs.map((t) => (
             <option key={t} value={t}>
@@ -229,7 +229,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
 
                     {/* Result badge */}
                     <span
-                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0 ${
+                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-md shrink-0 ${
                         exp.result === 'Selected'
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
                           : 'bg-rose-50 text-rose-700 border border-rose-200/80'
@@ -269,7 +269,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
                         exportExperiencePDF(exp);
                       }}
                       title="Download structured PDF brief for offline prep"
-                      className="px-2 py-1 rounded-full text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors flex items-center gap-1 text-[11px] font-medium border border-slate-200"
+                      className="px-2 py-1 rounded-md text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors flex items-center gap-1 text-[11px] font-medium border border-slate-200"
                     >
                       <Download className="w-3.5 h-3.5 text-slate-500" />
                       <span>PDF</span>

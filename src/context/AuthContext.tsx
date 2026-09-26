@@ -10,11 +10,19 @@ import { auth, db, googleProvider } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
 import { UserProfile } from '../types';
 
+export interface AuthErrorState {
+  code: string;
+  message: string;
+  domain?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   isAdmin: boolean;
   loading: boolean;
+  authError: AuthErrorState | null;
+  clearAuthError: () => void;
   signInWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -33,6 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [authError, setAuthError] = useState<AuthErrorState | null>(null);
+
+  const clearAuthError = () => setAuthError(null);
 
   const isAdmin = Boolean(
     user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase() ||
@@ -111,11 +122,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signInWithGoogle = async () => {
+    setAuthError(null);
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
-      if (err?.code !== 'auth/popup-closed-by-user') {
-        console.error('Sign in failed:', err);
+      if (err?.code === 'auth/popup-closed-by-user') {
+        // User closed the popup intentionally
+        return;
+      }
+
+      const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+      console.error('Sign in failed:', err);
+
+      if (err?.code === 'auth/unauthorized-domain') {
+        setAuthError({
+          code: 'auth/unauthorized-domain',
+          domain: currentDomain,
+          message: `The domain "${currentDomain}" is not authorized for Google Sign-in in your Firebase project. To fix this, you must add it to Firebase Console -> Authentication -> Settings -> Authorized domains.`,
+        });
+      } else if (err?.code === 'auth/popup-blocked') {
+        setAuthError({
+          code: 'auth/popup-blocked',
+          domain: currentDomain,
+          message:
+            'The sign-in popup was blocked by your browser. Please allow popups for this site and click Sign In again.',
+        });
+      } else if (err?.code === 'auth/operation-not-allowed') {
+        setAuthError({
+          code: 'auth/operation-not-allowed',
+          domain: currentDomain,
+          message:
+            'Google Sign-in is not enabled in Firebase. Please enable the Google provider in Firebase Console -> Authentication -> Sign-in method.',
+        });
+      } else {
+        setAuthError({
+          code: err?.code || 'auth/unknown',
+          domain: currentDomain,
+          message:
+            err?.message ||
+            'Failed to sign in with Google. Please check your network and Firebase configuration.',
+        });
       }
     }
   };
@@ -193,6 +239,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userProfile,
         isAdmin,
         loading,
+        authError,
+        clearAuthError,
         signInWithGoogle,
         logout,
         updateUserProfile,

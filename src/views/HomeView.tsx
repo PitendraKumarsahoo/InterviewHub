@@ -130,9 +130,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center pt-2 pb-6">
         {/* Left Column: Heading, Subtitle, Dual CTAs & Stats */}
         <div className="lg:col-span-7 space-y-6">
-          {/* Eyebrow Badge (Lavender / Indigo Pill) */}
-          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#EDE9FE] text-[#4F46E5] text-xs font-semibold tracking-wide">
-            <span>For non-placed & junior students</span>
+          {/* Eyebrow Label (Clean typography, no lavender pill) */}
+          <div className="text-xs font-bold text-orange-600 uppercase tracking-wider">
+            Campus Placement Interview Archives
           </div>
 
           {/* Display Headline: "straight from the room." in vibrant orange */}
@@ -144,14 +144,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Subtitle */}
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl">
             Students share the exact coding, GD and HR questions they faced. Browse by company, round,
-            or language — then learn from answers that helped someone move forward.
+            or language: then learn from answers that helped someone move forward.
           </p>
 
-          {/* Action Buttons: Indigo Primary Pill + Warm Subtle Secondary Pill */}
+          {/* Action Buttons: Clean Rectangular SaaS Buttons (2x horizontal padding) */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <button
               onClick={() => onSelectTab('companies')}
-              className="px-6 py-2.5 rounded-full bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-sm shadow-xs hover:shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-[0.98]"
+              className="px-5 py-2.5 rounded-lg bg-[#4338CA] hover:bg-[#3730A3] text-white font-semibold text-sm shadow-xs hover:shadow transition-all flex items-center gap-2 cursor-pointer active:scale-[0.98]"
             >
               <span>Explore companies</span>
               <ArrowRight className="w-4 h-4" />
@@ -159,13 +159,13 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             <button
               onClick={onOpenSubmit}
-              className="px-6 py-2.5 rounded-full bg-[#F3EFE9] hover:bg-white text-[#0F172A] font-semibold text-sm border border-[#EAE4DC] shadow-2xs transition-all cursor-pointer active:scale-[0.98]"
+              className="px-5 py-2.5 rounded-lg bg-[#F3EFE9] hover:bg-white text-[#0F172A] font-semibold text-sm border border-[#EAE4DC] shadow-2xs transition-all cursor-pointer active:scale-[0.98]"
             >
               Submit your experience
             </button>
           </div>
 
-          {/* Inline Stats Counter */}
+          {/* Inline Stats Counter: Real metrics only */}
           <div className="flex items-center gap-6 sm:gap-8 pt-3 border-t border-[#EAE4DC] max-w-lg">
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
@@ -183,23 +183,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             <div className="flex items-baseline gap-1.5">
               <span className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
-                {totalStudentsCount}+
+                {totalExperiencesCount}
               </span>
-              <span className="text-slate-500 text-xs sm:text-sm font-medium">students</span>
+              <span className="text-slate-500 text-xs sm:text-sm font-medium">experiences</span>
             </div>
           </div>
         </div>
 
         {/* Right Column: "This week's most asked" Live Card */}
         <div className="lg:col-span-5">
-          <div className="bg-white rounded-3xl p-6 border border-[#EAE4DC] shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl p-6 border border-[#EAE4DC] shadow-xs space-y-4">
             {/* Card Header */}
             <div className="flex items-center justify-between pb-1">
               <h2 className="font-bold text-[#0F172A] text-base sm:text-lg">
-                This week's most asked
+                Frequently Asked Coding &amp; HR
               </h2>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF7ED] text-[#EA580C]">
-                Live
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-[#FFF7ED] text-[#EA580C]">
+                Verified
               </span>
             </div>
 
@@ -255,7 +255,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* 2. FILTER ROW & SEARCH BAR */}
       <section className="space-y-4 pt-2">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          {/* Pill Filters (Matching Screenshot) */}
+          {/* Segmented Filter Controls */}
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className="text-sm font-semibold text-slate-500 mr-1.5">Filter:</span>
             {filterOptions.map((filter) => {
@@ -264,7 +264,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <button
                   key={filter}
                   onClick={() => handleFilterClick(filter)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     isActive
                       ? 'bg-[#0F172A] text-white shadow-xs'
                       : 'bg-white hover:bg-[#F3EFE9] text-slate-700 border border-[#EAE4DC] shadow-2xs'
@@ -279,7 +279,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Search Input Bar */}
           <form
             onSubmit={handleSearchSubmit}
-            className="w-full md:w-80 flex items-center bg-white p-1 pl-3.5 rounded-full border border-[#EAE4DC] shadow-2xs focus-within:ring-2 focus-within:ring-[#EA580C]/20 focus-within:border-[#EA580C] transition-all shrink-0"
+            className="w-full md:w-80 flex items-center bg-white p-1 pl-3.5 rounded-lg border border-[#EAE4DC] shadow-2xs focus-within:ring-2 focus-within:ring-[#EA580C]/20 focus-within:border-[#EA580C] transition-all shrink-0"
           >
             <Search className="w-4 h-4 text-slate-400 mr-2 shrink-0" />
             <input
@@ -291,7 +291,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             />
             <button
               type="submit"
-              className="px-4 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] active:bg-[#9A3412] text-white font-semibold text-xs rounded-full transition-colors cursor-pointer shrink-0"
+              className="px-3.5 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] active:bg-[#9A3412] text-white font-semibold text-xs rounded-md transition-colors cursor-pointer shrink-0"
             >
               Search
             </button>
@@ -331,7 +331,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm group-hover:bg-orange-600 transition-colors shadow-2xs">
                     {company.name.charAt(0)}
                   </div>
-                  <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-[#FAF8F5] text-slate-600 border border-[#EAE4DC]">
+                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-[#FAF8F5] text-slate-600 border border-[#EAE4DC]">
                     {company.type}
                   </span>
                 </div>
@@ -395,7 +395,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </span>
                   </div>
                   <span
-                    className={`px-2.5 py-0.5 text-xs font-semibold rounded-full shrink-0 ${
+                    className={`px-2 py-0.5 text-xs font-semibold rounded-md shrink-0 ${
                       exp.result === 'Selected'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
                         : exp.result === 'Not Selected'
@@ -415,7 +415,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   {exp.technologies.slice(0, 3).map((t) => (
                     <span
                       key={t}
-                      className="px-2.5 py-0.5 text-[11px] font-medium bg-[#FAF8F5] text-slate-700 rounded-full border border-[#EAE4DC]"
+                      className="px-2 py-0.5 text-[11px] font-medium bg-[#FAF8F5] text-slate-700 rounded-md border border-[#EAE4DC]"
                     >
                       {t}
                     </span>
@@ -472,11 +472,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <span className="text-xs font-bold text-slate-400">
                       0{idx + 1}
                     </span>
-                    <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-[#FAF8F5] text-slate-700 border border-[#EAE4DC]">
+                    <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-[#FAF8F5] text-slate-700 border border-[#EAE4DC]">
                       {q.type} {q.technology ? `· ${q.technology}` : ''}
                     </span>
                   </div>
-                  <span className="px-2.5 py-0.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200/70 rounded-full">
+                  <span className="px-2 py-0.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200/70 rounded-md">
                     Asked {q.askedCount} times
                   </span>
                 </div>
@@ -501,23 +501,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* 6. CALL TO ACTION BANNER */}
-      <section className="p-6 sm:p-8 bg-[#0F172A] rounded-3xl text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm border border-[#1E293B]">
+      {/* 6. CALL TO ACTION BANNER (Clean, Non-Slop, No Pill) */}
+      <section className="p-6 sm:p-8 bg-[#0F172A] rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-sm border border-[#1E293B]">
         <div className="space-y-1.5 text-center sm:text-left">
-          <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-orange-500/20 text-orange-300 text-xs font-semibold mb-1">
-            <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-            <span>Community Driven</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-orange-500/20 text-orange-300 text-xs font-semibold mb-1">
+            <CheckCircle2 className="w-3.5 h-3.5 text-orange-400" />
+            <span>Community Verified</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
             Share your interview experience
           </h3>
           <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed">
-            Help fellow students crack their dream job by contributing questions, rounds, and advice from your recent campus interview.
+            Contribute questions, round structures, and advice from your recent campus interview to help junior students navigate placement drives.
           </p>
         </div>
         <button
           onClick={onOpenSubmit}
-          className="px-6 py-3 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-semibold text-sm rounded-full transition-all shrink-0 shadow-md cursor-pointer flex items-center gap-2"
+          className="px-5 py-2.5 bg-orange-600 hover:bg-orange-700 active:bg-orange-800 text-white font-semibold text-sm rounded-lg transition-all shrink-0 shadow-md cursor-pointer flex items-center gap-2"
         >
           <span>Share experience</span>
           <ArrowRight className="w-4 h-4" />

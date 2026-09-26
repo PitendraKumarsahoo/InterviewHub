@@ -7,6 +7,7 @@ import { SubmitExperienceModal } from './components/SubmitExperienceModal';
 import { ExperienceDetailModal } from './components/ExperienceDetailModal';
 import { QuestionDetailModal } from './components/QuestionDetailModal';
 import { GlobalSearchModal } from './components/GlobalSearchModal';
+import { AuthDiagnosticModal } from './components/AuthDiagnosticModal';
 
 import { HomeView } from './views/HomeView';
 import { CompaniesView } from './views/CompaniesView';
@@ -17,6 +18,9 @@ import { RepeatedQuestionsView } from './views/RepeatedQuestionsView';
 import { CommunityView } from './views/CommunityView';
 import { ProfileView } from './views/ProfileView';
 import { AdminDashboardView } from './views/AdminDashboardView';
+import { PrivacyPolicyView } from './views/PrivacyPolicyView';
+import { TermsView } from './views/TermsView';
+import { CustomDomainGuideView } from './views/CustomDomainGuideView';
 
 import { Company, InterviewExperience, Question } from './types';
 import { db } from './lib/firebase';
@@ -371,6 +375,18 @@ function MainApp() {
             }}
           />
         )}
+
+        {currentTab === 'privacy' && (
+          <PrivacyPolicyView onBack={() => handleSelectTab('home')} />
+        )}
+
+        {currentTab === 'terms' && (
+          <TermsView onBack={() => handleSelectTab('home')} />
+        )}
+
+        {currentTab === 'custom-domain' && (
+          <CustomDomainGuideView onBack={() => handleSelectTab('home')} />
+        )}
       </main>
 
       {/* Footer */}
@@ -423,6 +439,9 @@ function MainApp() {
         onSelectQuestion={setSelectedQuestion}
         onSelectExperience={setSelectedExperience}
       />
+
+      {/* Auth Diagnostic & Domain Guidance Modal */}
+      <AuthDiagnosticModal />
     </div>
   );
 }

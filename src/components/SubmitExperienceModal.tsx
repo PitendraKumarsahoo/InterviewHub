@@ -15,7 +15,7 @@ import {
   AlertCircle,
   Search,
   Edit3,
-  Sparkles,
+  Star,
   Tag,
   Hash
 } from 'lucide-react';
@@ -1011,7 +1011,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                           <button
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="p-0.5 hover:bg-indigo-200/60 rounded-full transition-colors text-indigo-600"
+                            className="p-0.5 hover:bg-indigo-200/60 rounded-md transition-colors text-indigo-600"
                             title="Remove tag"
                           >
                             <X className="w-3 h-3" />
@@ -1041,7 +1041,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                           type="button"
                           key={tech}
                           onClick={() => handleToggleTech(tech)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
                             isSelected
                               ? 'bg-slate-900 text-white shadow-2xs font-semibold'
                               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -1154,11 +1154,11 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                         type="button"
                         key={star}
                         onClick={() => setOverallRating(star)}
-                        className={`text-lg transition-transform ${
-                          star <= overallRating ? 'text-amber-400 scale-110' : 'text-slate-300'
+                        className={`p-0.5 transition-transform ${
+                          star <= overallRating ? 'text-amber-500 scale-105' : 'text-slate-300'
                         }`}
                       >
-                        ★
+                        <Star className="w-5 h-5 fill-current" />
                       </button>
                     ))}
                     <span className="text-xs font-semibold text-slate-600 ml-2">
@@ -1351,7 +1351,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="px-5 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-full shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-5 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               Next Step
               <ChevronRight className="w-4 h-4" />
@@ -1361,7 +1361,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               type="button"
               disabled={submitting}
               onClick={handleSubmit}
-              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-full shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs flex items-center gap-2 transition-all cursor-pointer"
             >
               {submitting ? (
                 <span>Submitting...</span>

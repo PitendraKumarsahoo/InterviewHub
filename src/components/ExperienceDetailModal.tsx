@@ -193,7 +193,7 @@ export const ExperienceDetailModal: React.FC<ExperienceDetailModalProps> = ({
                   className="p-4 bg-slate-50/70 rounded-lg border border-slate-200/80 space-y-2"
                 >
                   <h4 className="text-sm font-semibold text-slate-900">
-                    Round {idx + 1} — {round.roundName}
+                    Round {idx + 1}: {round.roundName}
                   </h4>
 
                   {round.questions && round.questions.length > 0 && (

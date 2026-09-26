@@ -130,9 +130,30 @@ export const Footer: React.FC<FooterProps> = ({ onSelectTab }) => {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-[#EAE4DC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+        <div className="mt-8 pt-6 border-t border-[#EAE4DC] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
           <p>© {new Date().getFullYear()} PrepLoop. Real student placement intelligence.</p>
-          <p>Built for university graduates &amp; placement cells.</p>
+          <div className="flex items-center gap-4 text-xs">
+            <button
+              onClick={() => onSelectTab('privacy')}
+              className="hover:text-orange-600 transition-colors cursor-pointer"
+            >
+              Privacy Policy
+            </button>
+            <span className="text-slate-300">·</span>
+            <button
+              onClick={() => onSelectTab('terms')}
+              className="hover:text-orange-600 transition-colors cursor-pointer"
+            >
+              Terms &amp; Conditions
+            </button>
+            <span className="text-slate-300">·</span>
+            <button
+              onClick={() => onSelectTab('custom-domain')}
+              className="hover:text-orange-600 transition-colors cursor-pointer"
+            >
+              Custom Domain
+            </button>
+          </div>
         </div>
       </div>
     </footer>

@@ -80,7 +80,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
 
         <button
           onClick={onOpenSubmit}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-full shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
         >
           Submit Question
         </button>
@@ -94,7 +94,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
           placeholder="Search questions by keyword, topic, or company..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
         />
       </div>
 
@@ -103,7 +103,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {questionTypes.map((t) => (
             <option key={t} value={t}>
@@ -115,7 +115,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={techFilter}
           onChange={(e) => setTechFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {allTechs.map((tech) => (
             <option key={tech} value={tech}>
@@ -127,7 +127,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={difficultyFilter}
           onChange={(e) => setDifficultyFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {difficulties.map((d) => (
             <option key={d} value={d}>
@@ -139,7 +139,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={companyFilter}
           onChange={(e) => setCompanyFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-full text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
         >
           {allCompanies.map((c) => (
             <option key={c} value={c}>
@@ -225,7 +225,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
 
                 {/* Right side: Asked count + View button */}
                 <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
-                  <span className="px-3 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-200/70">
+                  <span className="px-2.5 py-0.5 text-xs font-semibold text-indigo-700 bg-indigo-50 rounded-md border border-indigo-200/70">
                     Asked {q.askedCount}x
                   </span>
 

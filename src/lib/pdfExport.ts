@@ -37,7 +37,7 @@ export function exportExperiencePDF(
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(15, 23, 42); // Slate 900
-  doc.text(`${experience.companyName} — ${experience.role}`, margin, currentY);
+  doc.text(`${experience.companyName} - ${experience.role}`, margin, currentY);
   currentY += 5.5;
 
   // Subtitle

@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Search Trigger */}
             <button
               onClick={onOpenSearch}
-              className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500 bg-white hover:bg-[#F3EFE9] rounded-full border border-[#EAE4DC] shadow-2xs transition-colors"
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs text-slate-500 bg-white hover:bg-[#F3EFE9] rounded-lg border border-[#EAE4DC] shadow-2xs transition-colors"
               title="Search (⌘K)"
             >
               <Search className="w-3.5 h-3.5 text-slate-400" />
@@ -97,7 +97,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Mobile Search Icon */}
             <button
               onClick={onOpenSearch}
-              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-full"
+              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-white rounded-lg"
               aria-label="Search"
             >
               <Search className="w-4 h-4" />
@@ -120,10 +120,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Orange Pill CTA: Share experience (Matching Screenshot) */}
+            {/* Orange CTA: Share experience (Clean SaaS rectangular button with 2x horizontal padding) */}
             <button
               onClick={onOpenSubmit}
-              className="flex items-center gap-1.5 px-5 sm:px-6 py-2 text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 active:bg-orange-800 rounded-full shadow-xs transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-4 sm:px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-orange-600 hover:bg-orange-700 active:bg-orange-800 rounded-lg shadow-xs transition-all cursor-pointer"
             >
               <span>Share experience</span>
             </button>
@@ -132,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {isAdmin && (
               <button
                 onClick={() => onSelectTab('admin')}
-                className={`hidden md:flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-full border transition-colors ${
+                className={`hidden md:flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors ${
                   currentTab === 'admin'
                     ? 'bg-rose-50 text-rose-700 border-rose-200'
                     : 'bg-white text-slate-600 border-[#EAE4DC] hover:bg-[#F3EFE9]'
@@ -275,7 +275,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   setIsMobileMenuOpen(false);
                   onOpenSubmit();
                 }}
-                className="w-full px-3 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-full flex items-center justify-center gap-1.5 shadow-xs"
+                className="w-full px-3 py-2 text-xs font-semibold text-white bg-orange-600 hover:bg-orange-700 rounded-lg flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <PlusCircle className="w-3.5 h-3.5" />
                 <span>Share Experience</span>

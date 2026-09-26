@@ -114,13 +114,13 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
                 const qEl = document.getElementById('company-questions-section');
                 if (qEl) qEl.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-full border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
+              className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-xs rounded-lg border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
             >
               View Questions
             </button>
             <button
               onClick={() => onOpenSubmit(company.id)}
-              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-full shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Share Experience</span>
@@ -160,7 +160,7 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
               {commonTechnologies.slice(0, 8).map((tech) => (
                 <span
                   key={tech}
-                  className="px-3 py-1 text-xs font-semibold rounded-full bg-slate-50 text-slate-700 border border-slate-200/60"
+                  className="px-3 py-1 text-xs font-semibold rounded-md bg-slate-50 text-slate-700 border border-slate-200/60"
                 >
                   {tech}
                 </span>

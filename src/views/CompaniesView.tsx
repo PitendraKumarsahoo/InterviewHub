@@ -47,7 +47,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({
 
         <button
           onClick={onOpenSubmit}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-full shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
         >
           Add Experience
         </button>
@@ -61,7 +61,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({
           placeholder="Search companies by name or category..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
+          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
         />
       </div>
 
@@ -72,7 +72,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({
           <button
             key={type}
             onClick={() => setSelectedType(type)}
-            className={`px-4 py-1.5 rounded-full font-semibold text-xs transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-all cursor-pointer ${
               selectedType === type
                 ? 'bg-indigo-600 text-white shadow-xs'
                 : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 shadow-2xs'
@@ -101,7 +101,7 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({
                   <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm group-hover:bg-indigo-600 transition-colors shadow-2xs">
                     {company.name.charAt(0)}
                   </div>
-                  <span className="px-2.5 py-0.5 text-[11px] font-semibold rounded-full bg-slate-100 text-slate-600">
+                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-slate-100 text-slate-600">
                     {company.type}
                   </span>
                 </div>
