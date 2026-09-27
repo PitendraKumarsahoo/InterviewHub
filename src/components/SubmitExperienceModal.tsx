@@ -317,37 +317,52 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
     setSubmitting(true);
     try {
       let compId = selectedCompanyId;
-      let compName = selectedCompanyName;
+      let compName = selectedCompanyName || customCompanyName;
 
-      // Check if new/custom company
-      if (selectedCompanyId === 'custom' || isCustomCompany) {
-        compId = customCompanyName.toLowerCase().replace(/[^a-z0-9]/g, '-');
-        compName = customCompanyName;
-        const newCompRef = doc(db, 'companies', compId);
-        await setDoc(newCompRef, {
-          id: compId,
-          name: compName,
-          slug: compId,
-          category: customCategory,
-          type: customType,
-          description: `${compName} interview experiences and placement tracks.`,
-          experienceCount: isAdmin ? 1 : 0,
-          questionCount: 0,
-          viewCount: 1,
-          createdAt: new Date().toISOString(),
-        });
+      const slug = compName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      if (!compId || compId === 'custom' || isCustomCompany) {
+        compId = slug;
       }
-
-      const experienceId = `exp-${Date.now()}`;
-      const expDocRef = doc(db, 'experiences', experienceId);
 
       const structuredRounds: RoundDetail[] = selectedRounds.map(r => ({
         roundName: r,
         questions: (roundsData[r] || []).filter(q => q.trim().length > 0),
       }));
 
-      // If submitted by admin -> auto-approved, else 'pending' moderation
-      const status = isAdmin ? 'approved' : 'pending';
+      const totalQuestionsCount = structuredRounds.reduce(
+        (acc, r) => acc + r.questions.length,
+        0
+      );
+
+      // Ensure company doc exists or update counts
+      const compRef = doc(db, 'companies', compId);
+      const companyAlreadyExists = companies.some(c => c.id === compId);
+
+      if (!companyAlreadyExists) {
+        await setDoc(compRef, {
+          id: compId,
+          name: compName,
+          slug: compId,
+          category: customCategory || 'Software Engineering',
+          type: customType || 'Product',
+          description: `${compName} placement drive experiences and interview questions.`,
+          experienceCount: 1,
+          questionCount: totalQuestionsCount,
+          viewCount: 1,
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        await updateDoc(compRef, {
+          experienceCount: increment(1),
+          questionCount: increment(totalQuestionsCount),
+        });
+      }
+
+      const experienceId = `exp-${Date.now()}`;
+      const expDocRef = doc(db, 'experiences', experienceId);
+
+      // Submissions are live and approved immediately so all people can see them
+      const status = 'approved';
 
       const experiencePayload = {
         id: experienceId,
@@ -367,21 +382,16 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
         experienceText: experienceText || 'Detailed interview experience.',
         advice: advice || 'Focus on core subjects and problem solving.',
         overallRating,
+        upvotes: 0,
+        upvotedBy: [],
+        bookmarkedBy: [],
         status,
         createdAt: new Date().toISOString(),
       };
 
       await setDoc(expDocRef, experiencePayload);
 
-      // If approved or admin, increment company experienceCount
-      if (status === 'approved' && !isCustomCompany) {
-        const compRef = doc(db, 'companies', compId);
-        await updateDoc(compRef, {
-          experienceCount: increment(1),
-        });
-      }
-
-      // Add individual questions to the questions bank
+      // Add individual questions to the questions bank with author userId
       for (const round of structuredRounds) {
         for (const qText of round.questions) {
           if (qText.trim()) {
@@ -389,6 +399,8 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
             const isCoding = round.roundName.toLowerCase().includes('coding');
             const qPayload = {
               id: qId,
+              userId: user.uid,
+              authorName: userProfile?.name || user.displayName || 'Student Contributor',
               companyId: compId,
               companyName: compName,
               experienceId,
@@ -399,8 +411,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               difficulty: difficulty === 'Difficult' ? 'Hard' : (difficulty === 'Easy' ? 'Easy' : 'Medium'),
               askedCount: 1,
               askedByUserIds: [user.uid],
-              status,
+              status: 'approved',
               companiesAsked: [compName],
+              upvotes: 0,
+              upvotedBy: [],
               createdAt: new Date().toISOString(),
             };
             await setDoc(doc(db, 'questions', qId), qPayload);
@@ -428,13 +442,13 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
       <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
         
         {/* Top Modal Header */}
-        <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+        <div className="bg-slate-50 px-6 py-4.5 border-b border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-black text-base shadow-xs">
               {step}/6
             </div>
             <div>
-              <h3 className="font-bold text-slate-900 text-base">
+              <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl">
                 {step === 1 && 'Step 1: Company & Placement Track'}
                 {step === 2 && 'Step 2: Interview Rounds'}
                 {step === 3 && 'Step 3: Questions per Round'}
@@ -442,21 +456,21 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 {step === 5 && 'Step 5: Overall Experience & Advice'}
                 {step === 6 && 'Step 6: Final Result & Review'}
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm sm:text-base text-slate-600">
                 Click any step tab below to jump directly and edit
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Clickable Step Navigation Bar */}
-        <div className="px-4 sm:px-6 py-2 bg-slate-100/80 border-b border-slate-200 overflow-x-auto flex items-center gap-1.5 text-xs">
+        <div className="px-4 sm:px-6 py-3 bg-slate-100/90 border-b border-slate-200 overflow-x-auto flex items-center gap-2">
           {[
             { num: 1, label: '1. Company' },
             { num: 2, label: '2. Rounds' },
@@ -469,10 +483,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               key={s.num}
               type="button"
               onClick={() => setStep(s.num)}
-              className={`px-2.5 py-1 rounded-lg font-medium whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
+              className={`px-3.5 py-2 rounded-xl font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 text-sm sm:text-base ${
                 step === s.num
-                  ? 'bg-indigo-600 text-white font-bold shadow-2xs'
-                  : 'text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+                  ? 'bg-[#EA580C] text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
               <span>{s.label}</span>
@@ -481,12 +495,12 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-5 text-sm">
+        <div className="p-6 sm:p-7 overflow-y-auto flex-1 space-y-6 text-base">
           {!user && (
-            <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3 text-xs text-amber-800">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="p-4 sm:p-5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3.5 text-sm sm:text-base text-amber-900">
+              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold">Sign in required to publish: </span>
+                <span className="font-bold">Sign in required to publish: </span>
                 You can draft your experience now. When you click Submit, you will be prompted to sign in with Google.
               </div>
             </div>
@@ -494,10 +508,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
           {/* STEP 1: Company & Role */}
           {step === 1 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span>Company *</span>
+                <label className="block text-base font-bold text-slate-900 mb-2 flex items-center justify-between">
+                  <span>Company Name *</span>
                   {selectedCompanyName && !isCompanySelectorOpen && (
                     <button
                       type="button"
@@ -505,9 +519,9 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                         setIsCompanySelectorOpen(true);
                         setCompanySearchQuery('');
                       }}
-                      className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold normal-case flex items-center gap-1"
+                      className="text-sm sm:text-base text-orange-600 hover:text-orange-700 font-bold normal-case flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
+                      <Edit3 className="w-4 h-4" />
                       Change Company
                     </button>
                   )}
@@ -515,18 +529,18 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
                 {/* Selected Company Card (when selected and not in search mode) */}
                 {selectedCompanyName && !isCompanySelectorOpen ? (
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                  <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-extrabold text-lg shadow-sm">
                         {selectedCompanyName.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900 text-sm block">
+                        <span className="font-bold text-slate-900 text-lg block">
                           {selectedCompanyName}
                         </span>
-                        <span className="text-[11px] text-slate-500">
+                        <span className="text-sm text-slate-600">
                           {isCustomCompany
-                            ? `${customCategory} · ${customType} (Custom / New)`
+                            ? `${customCategory} · ${customType} (New Company Track)`
                             : `${companies.find(c => c.id === selectedCompanyId)?.category || 'Software Engineering'} · ${companies.find(c => c.id === selectedCompanyId)?.type || 'Service'}`}
                         </span>
                       </div>
@@ -537,14 +551,14 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                         setIsCompanySelectorOpen(true);
                         setCompanySearchQuery('');
                       }}
-                      className="px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                      className="px-4 py-2 text-sm sm:text-base font-bold text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors cursor-pointer border border-orange-200"
                     >
                       Change Company
                     </button>
                   </div>
                 ) : (
                   /* Search / Type Company Name Input */
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 animate-in fade-in">
+                  <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 animate-in fade-in">
                     <div className="relative">
                       <input
                         type="text"
@@ -562,16 +576,16 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                             }
                           }
                         }}
-                        className="w-full px-3.5 py-2.5 pl-9 pr-8 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        className="w-full px-4 py-3.5 pl-11 pr-10 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white font-medium"
                       />
-                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                      <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-4 pointer-events-none" />
                       {companySearchQuery && (
                         <button
                           type="button"
                           onClick={() => setCompanySearchQuery('')}
-                          className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                          className="absolute right-3.5 top-4 text-slate-400 hover:text-slate-600"
                         >
-                          <X className="w-4 h-4" />
+                          <X className="w-5 h-5" />
                         </button>
                       )}
                     </div>
@@ -581,21 +595,21 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleSelectCustomCompany(companySearchQuery)}
-                        className="w-full text-left p-2.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-semibold text-indigo-900 flex items-center justify-between transition-colors"
+                        className="w-full text-left p-3.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl text-base font-bold text-orange-950 flex items-center justify-between transition-colors cursor-pointer"
                       >
-                        <span className="flex items-center gap-1.5">
-                          <Plus className="w-4 h-4 text-indigo-600" />
-                          Use "<strong className="text-indigo-700">{companySearchQuery.trim()}</strong>" as company
+                        <span className="flex items-center gap-2.5">
+                          <Plus className="w-5 h-5 text-orange-600" />
+                          <span>Use "<strong className="text-orange-700">{companySearchQuery.trim()}</strong>" as company</span>
                         </span>
-                        <span className="text-[10px] bg-white px-2 py-0.5 rounded text-indigo-600 border border-indigo-200">
+                        <span className="text-sm bg-white px-3 py-1.5 rounded-lg text-orange-700 border border-orange-200 font-bold shadow-2xs">
                           Select
                         </span>
                       </button>
                     )}
 
                     {/* Matched Companies List */}
-                    <div className="max-h-48 overflow-y-auto space-y-1 pt-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block px-1">
+                    <div className="max-h-52 overflow-y-auto space-y-1.5 pt-1">
+                      <span className="text-sm font-bold uppercase tracking-wider text-slate-500 block px-1">
                         {companySearchQuery ? `Matching Companies (${matchedCompanies.length})` : 'Popular Companies'}
                       </span>
                       {matchedCompanies.map((c) => (
@@ -603,17 +617,17 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                           key={c.id}
                           type="button"
                           onClick={() => handleSelectExistingCompany(c)}
-                          className="w-full text-left px-3 py-2 rounded-lg hover:bg-white flex items-center justify-between text-xs transition-colors group"
+                          className="w-full text-left px-4 py-3 rounded-xl hover:bg-white flex items-center justify-between text-base transition-colors group cursor-pointer"
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-slate-800 group-hover:text-indigo-600">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-slate-900 group-hover:text-orange-600">
                               {c.name}
                             </span>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-sm text-slate-500">
                               · {c.category} ({c.type})
                             </span>
                           </div>
-                          <span className="text-[11px] text-indigo-600 opacity-0 group-hover:opacity-100 font-semibold transition-opacity">
+                          <span className="text-sm text-orange-600 opacity-0 group-hover:opacity-100 font-bold transition-opacity">
                             Choose →
                           </span>
                         </button>
@@ -621,11 +635,11 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                     </div>
 
                     {selectedCompanyName && (
-                      <div className="pt-2 border-t border-slate-200 flex justify-end">
+                      <div className="pt-3 border-t border-slate-200 flex justify-end">
                         <button
                           type="button"
                           onClick={() => setIsCompanySelectorOpen(false)}
-                          className="text-xs text-slate-600 hover:text-slate-900 font-medium"
+                          className="text-sm sm:text-base text-slate-700 hover:text-slate-900 font-semibold cursor-pointer"
                         >
                           Keep "{selectedCompanyName}"
                         </button>
@@ -637,9 +651,9 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
               {/* Custom Company Details (if custom company selected) */}
               {isCustomCompany && (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 animate-in fade-in">
+                <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl space-y-4 animate-in fade-in">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    <label className="block text-base font-bold text-slate-900 mb-2">
                       Company Name *
                     </label>
                     <input
@@ -651,18 +665,18 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                         setCustomCompanyName(e.target.value);
                         setSelectedCompanyName(e.target.value);
                       }}
-                      className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                      className="w-full px-4 py-3.5 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                      <label className="block text-base font-bold text-slate-900 mb-2">
                         Category
                       </label>
                       <select
                         value={customCategory}
                         onChange={(e) => setCustomCategory(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        className="w-full px-4 py-3 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                       >
                         <option value="Software Engineering">Software Engineering</option>
                         <option value="Data Analytics">Data Analytics</option>
@@ -673,13 +687,13 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                      <label className="block text-base font-bold text-slate-900 mb-2">
                         Type
                       </label>
                       <select
                         value={customType}
                         onChange={(e) => setCustomType(e.target.value)}
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        className="w-full px-4 py-3 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                       >
                         <option value="Service">Service</option>
                         <option value="Product">Product</option>
@@ -692,9 +706,9 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               )}
 
               {/* Job Role & Drive Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-base font-bold text-slate-900 mb-2">
                     Job Role *
                   </label>
                   <input
@@ -703,18 +717,18 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                     placeholder="e.g. Software Engineer / SDE-1 / Data Analyst"
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs sm:text-sm"
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-base font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-base font-bold text-slate-900 mb-2">
                     Interview Type *
                   </label>
                   <select
                     value={interviewType}
                     onChange={(e) => setInterviewType(e.target.value as InterviewType)}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white text-xs sm:text-sm"
+                    className="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white text-base font-medium"
                   >
                     <option value="Campus">On-Campus Placement</option>
                     <option value="Off-campus">Off-Campus Drive</option>
@@ -725,7 +739,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-base font-bold text-slate-900 mb-2">
                   Placement Drive Year
                 </label>
                 <input
@@ -734,7 +748,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                   max={2030}
                   value={year}
                   onChange={(e) => setYear(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-xs sm:text-sm"
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-base font-medium"
                 />
               </div>
             </div>
@@ -742,17 +756,17 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
           {/* STEP 2: Rounds Selection */}
           {step === 2 && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Select Interview Rounds</h4>
-                  <p className="text-slate-500 text-xs mt-0.5">
-                    Which rounds took place during the interview evaluation?
+                  <h4 className="font-extrabold text-slate-900 text-lg sm:text-xl">Select Interview Rounds</h4>
+                  <p className="text-slate-600 text-sm sm:text-base mt-1">
+                    Which rounds were conducted during your campus or off-campus evaluation?
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
                 {AVAILABLE_ROUNDS.map((round) => {
                   const isChecked = selectedRounds.includes(round);
                   return (
@@ -760,21 +774,21 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                       type="button"
                       key={round}
                       onClick={() => handleToggleRound(round)}
-                      className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      className={`p-4.5 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                         isChecked
-                          ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 font-semibold shadow-2xs'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50'
+                          ? 'border-[#EA580C] bg-orange-50/70 text-slate-900 font-bold shadow-2xs'
+                          : 'border-slate-200 hover:border-slate-300 text-slate-800 hover:bg-slate-50'
                       }`}
                     >
-                      <span>{round}</span>
+                      <span className="text-base sm:text-lg font-semibold">{round}</span>
                       <div
-                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center border transition-colors ${
                           isChecked
-                            ? 'bg-indigo-600 border-indigo-600 text-white'
+                            ? 'bg-[#EA580C] border-[#EA580C] text-white'
                             : 'border-slate-300 bg-white'
                         }`}
                       >
-                        {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        {isChecked && <Check className="w-4 h-4 stroke-[3]" />}
                       </div>
                     </button>
                   );
@@ -788,59 +802,59 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-900 text-sm">Questions Asked in Each Round</h4>
-                  <p className="text-slate-500 text-xs mt-0.5">
-                    Enter the questions you were asked by the interviewers or online test:
+                  <h4 className="font-extrabold text-slate-900 text-lg sm:text-xl">Questions Asked in Each Round</h4>
+                  <p className="text-slate-600 text-sm sm:text-base mt-1">
+                    Enter the questions and problems you faced during each round:
                   </p>
                 </div>
               </div>
 
               {selectedRounds.length === 0 ? (
-                <div className="p-6 text-center text-slate-500 bg-slate-50 rounded-xl space-y-2">
-                  <p>No rounds selected.</p>
+                <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                  <p className="text-base font-bold text-slate-800">No rounds selected.</p>
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="text-xs text-indigo-600 font-semibold hover:underline"
+                    className="text-base text-orange-600 font-bold hover:underline cursor-pointer"
                   >
                     ← Click here to select rounds in Step 2
                   </button>
                 </div>
               ) : (
                 selectedRounds.map((round) => (
-                  <div key={round} className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                  <div key={round} className="p-6 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                        <Layers className="w-4 h-4 text-indigo-600" />
+                      <span className="font-bold text-slate-900 text-lg flex items-center gap-2.5">
+                        <Layers className="w-5 h-5 text-orange-600" />
                         {round}
                       </span>
                       <button
                         type="button"
                         onClick={() => handleAddQuestionToRound(round)}
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
+                        className="text-sm sm:text-base text-orange-600 hover:text-orange-800 font-bold flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-4 h-4" />
                         Add Question
                       </button>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {(roundsData[round] || []).map((q, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
+                        <div key={idx} className="flex items-center gap-3">
                           <input
                             type="text"
-                            placeholder={`e.g. Question #${idx + 1} asked in ${round}`}
+                            placeholder={`e.g. Question #${idx + 1} asked in ${round}...`}
                             value={q}
                             onChange={(e) => handleUpdateQuestion(round, idx, e.target.value)}
-                            className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                            className="flex-1 px-4 py-3 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white font-medium"
                           />
                           {(roundsData[round]?.length || 0) > 1 && (
                             <button
                               type="button"
                               onClick={() => handleRemoveQuestion(round, idx)}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded"
+                              className="p-2.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-slate-200/60 transition-colors cursor-pointer"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           )}
                         </div>
@@ -856,26 +870,26 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
           {step === 4 && (
             <div className="space-y-6">
               {/* Categorization & Tagging System */}
-              <div className="p-4 bg-indigo-50/40 rounded-2xl border border-indigo-100 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="p-5 bg-orange-50/40 rounded-2xl border border-orange-100 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <Tag className="w-4 h-4 text-indigo-600" />
-                      Domain &amp; Skill Categorization Tags *
+                    <label className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <Tag className="w-5 h-5 text-orange-600" />
+                      <span>Domain &amp; Skill Categorization Tags *</span>
                     </label>
-                    <p className="text-slate-500 text-xs mt-0.5">
+                    <p className="text-slate-600 text-sm sm:text-base mt-1">
                       Categorize your experience by engineering domain or specific skills tested to help candidates find relevant interview tracks.
                     </p>
                   </div>
 
                   {/* Filter pill switcher */}
-                  <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 self-start sm:self-auto text-xs">
+                  <div className="flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 self-start sm:self-auto text-sm">
                     <button
                       type="button"
                       onClick={() => setTagCategoryFilter('all')}
-                      className={`px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
                         tagCategoryFilter === 'all'
-                          ? 'bg-indigo-600 text-white shadow-2xs'
+                          ? 'bg-[#EA580C] text-white shadow-2xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -884,9 +898,9 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setTagCategoryFilter('domains')}
-                      className={`px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
                         tagCategoryFilter === 'domains'
-                          ? 'bg-indigo-600 text-white shadow-2xs'
+                          ? 'bg-[#EA580C] text-white shadow-2xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -895,9 +909,9 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setTagCategoryFilter('skills')}
-                      className={`px-2.5 py-1 rounded-lg font-semibold transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer ${
                         tagCategoryFilter === 'skills'
-                          ? 'bg-indigo-600 text-white shadow-2xs'
+                          ? 'bg-[#EA580C] text-white shadow-2xs'
                           : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
@@ -908,11 +922,11 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
                 {/* Domain Tags section */}
                 {(tagCategoryFilter === 'all' || tagCategoryFilter === 'domains') && (
-                  <div className="space-y-1.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  <div className="space-y-2">
+                    <span className="text-sm font-bold uppercase tracking-wider text-slate-600 block">
                       Engineering Domains &amp; Tracks:
                     </span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2.5">
                       {DOMAIN_TAGS.map((tag) => {
                         const isSelected = selectedTags.includes(tag);
                         return (
@@ -920,14 +934,14 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                             type="button"
                             key={tag}
                             onClick={() => handleToggleTag(tag)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                               isSelected
-                                ? 'bg-indigo-600 text-white shadow-2xs'
-                                : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                ? 'bg-[#EA580C] text-white shadow-xs font-bold'
+                                : 'bg-white text-slate-800 border border-slate-200 hover:border-orange-300 hover:bg-slate-50'
                             }`}
                           >
                             <span>#{tag}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
                           </button>
                         );
                       })}
@@ -937,11 +951,11 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
                 {/* Skill Tags section */}
                 {(tagCategoryFilter === 'all' || tagCategoryFilter === 'skills') && (
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
+                  <div className="space-y-2 pt-2">
+                    <span className="text-sm font-bold uppercase tracking-wider text-slate-600 block">
                       Core Interview Skills &amp; Focus Areas:
                     </span>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2.5">
                       {SKILL_TAGS.map((tag) => {
                         const isSelected = selectedTags.includes(tag);
                         return (
@@ -949,14 +963,14 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                             type="button"
                             key={tag}
                             onClick={() => handleToggleTag(tag)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-semibold transition-all cursor-pointer flex items-center gap-2 ${
                               isSelected
-                                ? 'bg-indigo-600 text-white shadow-2xs'
-                                : 'bg-white text-slate-700 border border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                                ? 'bg-[#EA580C] text-white shadow-xs font-bold'
+                                : 'bg-white text-slate-800 border border-slate-200 hover:border-orange-300 hover:bg-slate-50'
                             }`}
                           >
                             <span>#{tag}</span>
-                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            {isSelected && <Check className="w-4 h-4 stroke-[3]" />}
                           </button>
                         );
                       })}
@@ -965,13 +979,13 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 )}
 
                 {/* Add Custom Domain or Skill Tag */}
-                <div className="pt-2 border-t border-indigo-100">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <div className="pt-3 border-t border-orange-100">
+                  <label className="block text-sm font-bold text-slate-800 mb-2">
                     Add custom skill or domain tag:
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2.5">
                     <div className="relative flex-1">
-                      <Hash className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3 pointer-events-none" />
+                      <Hash className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5 pointer-events-none" />
                       <input
                         type="text"
                         placeholder="e.g. Distributed Systems, Kubernetes, Kafka, Next.js, Product Management..."
@@ -983,13 +997,13 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                             handleAddCustomTag();
                           }
                         }}
-                        className="w-full pl-8 pr-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                        className="w-full pl-9 pr-3.5 py-2.5 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => handleAddCustomTag()}
-                      className="px-3.5 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-2xs transition-colors cursor-pointer shrink-0"
+                      className="px-4 py-2.5 text-sm sm:text-base font-bold bg-[#EA580C] hover:bg-[#C2410C] text-white rounded-xl shadow-xs transition-colors cursor-pointer shrink-0"
                     >
                       + Add Tag
                     </button>
@@ -998,24 +1012,24 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
                 {/* Selected Tags Display */}
                 {selectedTags.length > 0 && (
-                  <div className="p-3 bg-white rounded-xl border border-indigo-200 space-y-1.5">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-900 block">
+                  <div className="p-4 bg-white rounded-xl border border-orange-200 space-y-2">
+                    <span className="text-sm font-bold uppercase tracking-wider text-orange-900 block">
                       Currently Attached Tags ({selectedTags.length}):
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {selectedTags.map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200 font-semibold"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-orange-50 text-orange-800 rounded-lg border border-orange-200 font-bold"
                         >
                           <span>#{tag}</span>
                           <button
                             type="button"
                             onClick={() => handleRemoveTag(tag)}
-                            className="p-0.5 hover:bg-indigo-200/60 rounded-md transition-colors text-indigo-600"
+                            className="p-1 hover:bg-orange-200/60 rounded-md transition-colors text-orange-700 cursor-pointer"
                             title="Remove tag"
                           >
-                            <X className="w-3 h-3" />
+                            <X className="w-3.5 h-3.5" />
                           </button>
                         </span>
                       ))}
@@ -1025,12 +1039,12 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               </div>
 
               {/* Technologies Tested section */}
-              <div className="space-y-4 pt-1">
+              <div className="space-y-4 pt-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                  <label className="block text-base font-bold text-slate-900 mb-1">
                     Technologies Asked During Interview *
                   </label>
-                  <p className="text-slate-500 text-xs mb-3">
+                  <p className="text-slate-600 text-sm sm:text-base mb-3">
                     Click chips to select languages, libraries, and frameworks asked during the rounds.
                   </p>
 
@@ -1042,10 +1056,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                           type="button"
                           key={tech}
                           onClick={() => handleToggleTech(tech)}
-                          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer ${
+                          className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-medium transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-slate-900 text-white shadow-2xs font-semibold'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                              ? 'bg-slate-900 text-white shadow-xs font-bold'
+                              : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
                           }`}
                         >
                           {isSelected ? `✓ ${tech}` : `+ ${tech}`}
@@ -1056,22 +1070,22 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 </div>
 
                 {/* Add custom technology */}
-                <div className="pt-1">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                <div className="pt-2">
+                  <label className="block text-sm font-bold text-slate-800 mb-1.5">
                     Add another technology not listed above
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2.5">
                     <input
                       type="text"
                       placeholder="e.g. Flutter / Rust / GraphQL / Kafka"
                       value={customTechInput}
                       onChange={(e) => setCustomTechInput(e.target.value)}
-                      className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                      className="flex-1 px-4 py-2.5 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white"
                     />
                     <button
                       type="button"
                       onClick={handleAddCustomTech}
-                      className="px-3 py-2 text-xs font-semibold bg-slate-800 text-white rounded-lg hover:bg-slate-900 cursor-pointer"
+                      className="px-4 py-2.5 text-sm sm:text-base font-bold bg-slate-900 text-white rounded-xl hover:bg-slate-800 cursor-pointer"
                     >
                       Add Chip
                     </button>
@@ -1079,15 +1093,15 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 </div>
 
                 {selectedTechs.length > 0 && (
-                  <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <span className="text-sm font-bold uppercase tracking-wider text-slate-700 block mb-2">
                       Currently Selected Technologies ({selectedTechs.length})
                     </span>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="flex flex-wrap gap-2">
                       {selectedTechs.map((t) => (
                         <span
                           key={t}
-                          className="px-2 py-0.5 text-xs bg-white text-slate-700 rounded-md border border-slate-200 font-medium"
+                          className="px-3 py-1 text-sm bg-white text-slate-800 rounded-lg border border-slate-200 font-semibold"
                         >
                           {t}
                         </span>
@@ -1101,43 +1115,43 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
           {/* STEP 5: Overall experience & advice */}
           {step === 5 && (
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-base font-bold text-slate-900 mb-2">
                   Detailed Experience Description *
                 </label>
                 <textarea
-                  rows={4}
+                  rows={5}
                   required
                   placeholder="Describe how the interview progressed, atmosphere, interviewer demeanor, coding style expected, and any critical moments..."
                   value={experienceText}
                   onChange={(e) => setExperienceText(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full px-4 py-3.5 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 font-medium leading-relaxed"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-base font-bold text-slate-900 mb-2">
                   Advice for Juniors &amp; Future Aspirants
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   placeholder="What should juniors specifically prepare? What mistakes should they avoid? (e.g. Practice talking while coding, revise resume projects thoroughly)"
                   value={advice}
                   onChange={(e) => setAdvice(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="w-full px-4 py-3.5 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 font-medium leading-relaxed"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-base font-bold text-slate-900 mb-2">
                     Interview Difficulty
                   </label>
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as DifficultyLevel)}
-                    className="w-full px-3 py-2 text-xs sm:text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
+                    className="w-full px-4 py-3 text-base rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white font-medium"
                   >
                     <option value="Easy">Easy</option>
                     <option value="Moderate">Moderate</option>
@@ -1146,23 +1160,23 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-base font-bold text-slate-900 mb-2">
                     Overall Experience Rating (1-5)
                   </label>
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-2 pt-1.5">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         type="button"
                         key={star}
                         onClick={() => setOverallRating(star)}
-                        className={`p-0.5 transition-transform ${
-                          star <= overallRating ? 'text-amber-500 scale-105' : 'text-slate-300'
+                        className={`p-1 transition-transform cursor-pointer ${
+                          star <= overallRating ? 'text-amber-500 scale-110' : 'text-slate-300'
                         }`}
                       >
-                        <Star className="w-5 h-5 fill-current" />
+                        <Star className="w-6 h-6 fill-current" />
                       </button>
                     ))}
-                    <span className="text-xs font-semibold text-slate-600 ml-2">
+                    <span className="text-base font-bold text-slate-800 ml-2.5">
                       {overallRating}/5
                     </span>
                   </div>
@@ -1173,12 +1187,12 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
 
           {/* STEP 6: Final result & preview with DIRECT EDIT LINKS */}
           {step === 6 && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                <label className="block text-base font-bold text-slate-900 mb-3">
                   What was your final result? *
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {(['Selected', 'Not Selected', 'Still Waiting', 'Waitlisted', 'Prefer not to say'] as InterviewResult[]).map((res) => {
                     const isSelected = result === res;
                     const statusCfg = parseApplicantStatus(res);
@@ -1187,66 +1201,66 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                         type="button"
                         key={res}
                         onClick={() => setResult(res)}
-                        className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                           isSelected
-                            ? `${statusCfg.badgeBg} ${statusCfg.badgeBorder} ${statusCfg.badgeText} ring-2 ring-indigo-500/20 shadow-xs font-semibold`
-                            : 'border-slate-200 text-slate-700 hover:bg-slate-50'
+                            ? `${statusCfg.badgeBg} ${statusCfg.badgeBorder} ${statusCfg.badgeText} ring-2 ring-orange-500/30 shadow-xs font-bold`
+                            : 'border-slate-200 text-slate-800 hover:bg-slate-50 font-medium'
                         }`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${statusCfg.dotBg}`} />
-                          <span className="text-xs">{res}</span>
+                        <div className="flex items-center gap-2.5">
+                          <span className={`w-2.5 h-2.5 rounded-full ${statusCfg.dotBg}`} />
+                          <span className="text-sm sm:text-base">{res}</span>
                         </div>
-                        {isSelected && <Check className="w-4 h-4 shrink-0" />}
+                        {isSelected && <Check className="w-5 h-5 shrink-0 stroke-[2.5]" />}
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-[11px] text-slate-500 mt-2">
+                <p className="text-sm text-slate-600 mt-2.5">
                   Tip: Rejection and in-progress experiences are just as valuable! Sharing where you encountered bottlenecks helps fellow students prepare better.
                 </p>
               </div>
 
               {/* Clean Preview Card with direct 1-click edit links */}
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3.5">
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600">
                       Submission Summary
                     </span>
-                    <StatusTag result={result} size="xs" showDot={true} showPulse={true} />
+                    <StatusTag result={result} size="sm" showDot={true} showPulse={true} />
                   </div>
-                  <span className="text-[11px] text-indigo-600 font-medium">
+                  <span className="text-sm text-orange-600 font-bold">
                     Click [Edit] to modify any section
                   </span>
                 </div>
 
                 {/* Company & Role row */}
-                <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <span className="font-bold text-slate-900 text-base block">
+                    <span className="font-extrabold text-slate-900 text-lg sm:text-xl block">
                       {selectedCompanyName || 'No company selected'}
                     </span>
-                    <span className="text-xs text-slate-600">
+                    <span className="text-sm sm:text-base text-slate-600 mt-0.5 block">
                       {role} · {interviewType} · Year {year}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors cursor-pointer"
+                    className="text-sm font-bold text-orange-700 hover:text-orange-900 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-orange-100 transition-colors cursor-pointer"
                   >
                     Edit Company &amp; Role
                   </button>
                 </div>
 
                 {/* Rounds row */}
-                <div className="pt-2 border-t border-slate-200 flex items-start justify-between gap-2">
-                  <div className="text-xs text-slate-600 flex-1">
-                    <span className="font-semibold text-slate-800 block mb-1">Rounds &amp; Questions:</span>
-                    <div className="flex flex-wrap items-center gap-1.5">
+                <div className="pt-3 border-t border-slate-200 flex items-start justify-between gap-3">
+                  <div className="text-sm sm:text-base text-slate-700 flex-1">
+                    <span className="font-bold text-slate-900 block mb-1.5">Rounds &amp; Questions:</span>
+                    <div className="flex flex-wrap items-center gap-2">
                       {selectedRounds.map((r, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-white rounded border border-slate-200 text-slate-700 text-[11px]">
+                        <span key={i} className="px-3 py-1 bg-white rounded-lg border border-slate-200 text-slate-800 text-sm font-semibold">
                           {r} ({(roundsData[r] || []).filter(q => q.trim()).length} Qs)
                         </span>
                       ))}
@@ -1255,47 +1269,47 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors shrink-0"
+                    className="text-sm font-bold text-orange-700 hover:text-orange-900 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-orange-100 transition-colors shrink-0 cursor-pointer"
                   >
                     Edit Questions
                   </button>
                 </div>
 
                 {/* Domain & Skill Tags row */}
-                <div className="pt-2 border-t border-slate-200 flex items-start justify-between gap-2">
+                <div className="pt-3 border-t border-slate-200 flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <span className="font-semibold text-slate-800 block text-xs mb-1 flex items-center gap-1">
-                      <Tag className="w-3 h-3 text-indigo-600" />
+                    <span className="font-bold text-slate-900 block text-sm sm:text-base mb-1.5 flex items-center gap-1.5">
+                      <Tag className="w-4 h-4 text-orange-600" />
                       Domain &amp; Skill Tags:
                     </span>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {selectedTags.length > 0 ? (
                         selectedTags.map(tag => (
-                          <span key={tag} className="px-2 py-0.5 text-[11px] bg-indigo-50 border border-indigo-200 rounded text-indigo-700 font-medium">
+                          <span key={tag} className="px-2.5 py-1 text-sm bg-orange-50 border border-orange-200 rounded-lg text-orange-800 font-bold">
                             #{tag}
                           </span>
                         ))
                       ) : (
-                        <span className="text-[11px] text-slate-400 italic">No tags selected</span>
+                        <span className="text-sm text-slate-400 italic">No tags selected</span>
                       )}
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setStep(4)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors shrink-0"
+                    className="text-sm font-bold text-orange-700 hover:text-orange-900 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-orange-100 transition-colors shrink-0 cursor-pointer"
                   >
                     Edit Tags
                   </button>
                 </div>
 
                 {/* Tech row */}
-                <div className="pt-2 border-t border-slate-200 flex items-start justify-between gap-2">
+                <div className="pt-3 border-t border-slate-200 flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <span className="font-semibold text-slate-800 block text-xs mb-1">Technologies Tested:</span>
-                    <div className="flex flex-wrap gap-1">
+                    <span className="font-bold text-slate-900 block text-sm sm:text-base mb-1.5">Technologies Tested:</span>
+                    <div className="flex flex-wrap gap-1.5">
                       {selectedTechs.map(t => (
-                        <span key={t} className="px-2 py-0.5 text-[11px] bg-white border border-slate-200 rounded text-slate-700">
+                        <span key={t} className="px-2.5 py-1 text-sm bg-white border border-slate-200 rounded-lg text-slate-800 font-semibold">
                           {t}
                         </span>
                       ))}
@@ -1304,32 +1318,32 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setStep(4)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors shrink-0"
+                    className="text-sm font-bold text-orange-700 hover:text-orange-900 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-orange-100 transition-colors shrink-0 cursor-pointer"
                   >
                     Edit Tech
                   </button>
                 </div>
 
                 {/* Description & Advice */}
-                <div className="pt-2 border-t border-slate-200 flex items-start justify-between gap-2">
-                  <div className="flex-1 text-xs text-slate-600">
-                    <span className="font-semibold text-slate-800 block mb-0.5">Experience &amp; Advice:</span>
-                    <p className="line-clamp-2 italic">
+                <div className="pt-3 border-t border-slate-200 flex items-start justify-between gap-3">
+                  <div className="flex-1 text-sm sm:text-base text-slate-700">
+                    <span className="font-bold text-slate-900 block mb-1">Experience &amp; Advice:</span>
+                    <p className="line-clamp-2 italic text-slate-600 leading-relaxed">
                       "{experienceText || 'No detailed walkthrough provided'}"
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setStep(5)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors shrink-0"
+                    className="text-sm font-bold text-orange-700 hover:text-orange-900 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-2xs hover:bg-orange-100 transition-colors shrink-0 cursor-pointer"
                   >
                     Edit Advice
                   </button>
                 </div>
 
-                <div className="pt-2.5 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-                  <span>Candidate Result: <strong className="text-slate-800">{result}</strong></span>
-                  <span className="font-semibold text-indigo-600">Review Status: Moderated</span>
+                <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-sm text-slate-600 font-medium">
+                  <span>Candidate Result: <strong className="text-slate-900 font-bold">{result}</strong></span>
+                  <span className="font-bold text-emerald-600">Status: Verified Submission</span>
                 </div>
               </div>
             </div>
@@ -1337,12 +1351,12 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
         </div>
 
         {/* Modal Footer Controls */}
-        <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+        <div className="bg-slate-50 px-6 sm:px-7 py-4 border-t border-slate-200 flex items-center justify-between">
           {step > 1 ? (
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-5 py-2.5 text-sm sm:text-base font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 flex items-center gap-2 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               Back
@@ -1355,7 +1369,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="px-5 py-2.5 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-6 py-3 text-sm sm:text-base font-bold text-white bg-[#EA580C] hover:bg-[#C2410C] active:bg-[#9A3412] rounded-xl shadow-md flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
             >
               Next Step
               <ChevronRight className="w-4 h-4" />
@@ -1365,18 +1379,18 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               type="button"
               disabled={submitting}
               onClick={handleSubmit}
-              className="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 rounded-lg shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+              className="px-7 py-3.5 text-base font-bold text-white bg-[#EA580C] hover:bg-[#C2410C] active:bg-[#9A3412] rounded-xl shadow-lg flex items-center gap-2.5 transition-all cursor-pointer hover:scale-[1.02]"
             >
               {submitting ? (
-                <span>Submitting...</span>
+                <span>Submitting Experience...</span>
               ) : submittedSuccess ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-300" />
-                  <span>Submitted for Review!</span>
+                  <Check className="w-5 h-5 text-emerald-300" />
+                  <span>Submitted Successfully!</span>
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4" />
+                  <Send className="w-5 h-5" />
                   <span>Submit Experience</span>
                 </>
               )}

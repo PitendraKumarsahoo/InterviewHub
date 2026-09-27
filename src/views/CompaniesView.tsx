@@ -86,8 +86,24 @@ export const CompaniesView: React.FC<CompaniesViewProps> = ({
       {/* Company Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredCompanies.length === 0 ? (
-          <div className="col-span-full p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-xs sm:text-sm">
-            No companies found matching your criteria.
+          <div className="col-span-full p-10 sm:p-14 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 space-y-3 shadow-2xs">
+            <h3 className="font-bold text-slate-900 text-base">
+              {companies.length === 0 ? 'No companies added yet — be the first to share an experience' : 'No companies found matching your filter'}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+              {companies.length === 0
+                ? 'Companies are added automatically when students submit verified interview debriefs.'
+                : 'Try adjusting your search query or sector filter.'}
+            </p>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={onOpenSubmit}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                Share Experience
+              </button>
+            </div>
           </div>
         ) : (
           filteredCompanies.map((company) => (

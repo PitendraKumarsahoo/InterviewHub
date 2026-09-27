@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { MobileBottomBar } from './components/MobileBottomBar';
 import { ProfileModal } from './components/ProfileModal';
 import { SubmitExperienceModal } from './components/SubmitExperienceModal';
 import { ExperienceDetailModal } from './components/ExperienceDetailModal';
@@ -17,6 +18,7 @@ import { ExperiencesView } from './views/ExperiencesView';
 import { RepeatedQuestionsView } from './views/RepeatedQuestionsView';
 import { CommunityView } from './views/CommunityView';
 import { ProfileView } from './views/ProfileView';
+import { UserDashboardView } from './views/UserDashboardView';
 import { AdminDashboardView } from './views/AdminDashboardView';
 import { PrivacyPolicyView } from './views/PrivacyPolicyView';
 import { TermsView } from './views/TermsView';
@@ -247,7 +249,7 @@ function MainApp() {
   const currentCompany = companies.find((c) => c.id === selectedCompanyId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-slate-900 selection:bg-orange-100 selection:text-orange-900 font-sans">
+    <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-slate-900 selection:bg-orange-100 selection:text-orange-900 font-sans w-full max-w-full overflow-x-hidden">
       {/* Navigation */}
       <Navbar
         currentTab={currentTab}
@@ -257,7 +259,7 @@ function MainApp() {
       />
 
       {/* Main View Router */}
-      <main className="flex-1">
+      <main className="flex-1 w-full max-w-full overflow-x-hidden pb-20 md:pb-0">
         {currentTab === 'home' && (
           <HomeView
             companies={companies}
@@ -338,6 +340,17 @@ function MainApp() {
             onUpvoteExperience={handleUpvoteExperience}
             onToggleBookmark={handleToggleBookmark}
             onUpvoteQuestion={handleUpvoteQuestion}
+          />
+        )}
+
+        {currentTab === 'dashboard' && (
+          <UserDashboardView
+            companies={companies}
+            allExperiences={experiences}
+            allQuestions={questions}
+            onSelectExperience={setSelectedExperience}
+            onSelectQuestion={setSelectedQuestion}
+            onOpenSubmit={() => handleOpenSubmit()}
           />
         )}
 
@@ -426,6 +439,14 @@ function MainApp() {
 
       {/* Auth Diagnostic & Domain Guidance Modal */}
       <AuthDiagnosticModal />
+
+      {/* Mobile Bottom Navigation Bar (Home, Search, Share, Companies, Dashboard) */}
+      <MobileBottomBar
+        currentTab={currentTab}
+        onSelectTab={handleSelectTab}
+        onOpenSearch={() => setIsSearchModalOpen(true)}
+        onOpenSubmit={() => handleOpenSubmit()}
+      />
     </div>
   );
 }

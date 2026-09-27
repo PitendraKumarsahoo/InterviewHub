@@ -3,19 +3,27 @@ import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { initializeFirestore, getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
 
+const getEnv = (key: string) => {
+  try {
+    return (typeof import.meta !== 'undefined' && (import.meta as any).env) ? (import.meta as any).env[key] : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 // Support both embedded json config and Vercel/Vite environment variables
 const resolvedConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
+  apiKey: getEnv('VITE_FIREBASE_API_KEY') || firebaseConfigJson.apiKey,
+  authDomain: getEnv('VITE_FIREBASE_AUTH_DOMAIN') || firebaseConfigJson.authDomain,
+  projectId: getEnv('VITE_FIREBASE_PROJECT_ID') || firebaseConfigJson.projectId,
   firestoreDatabaseId:
-    import.meta.env.VITE_FIREBASE_DATABASE_ID ||
+    getEnv('VITE_FIREBASE_DATABASE_ID') ||
     firebaseConfigJson.firestoreDatabaseId ||
     '(default)',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
+  storageBucket: getEnv('VITE_FIREBASE_STORAGE_BUCKET') || firebaseConfigJson.storageBucket,
   messagingSenderId:
-    import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
+    getEnv('VITE_FIREBASE_MESSAGING_SENDER_ID') || firebaseConfigJson.messagingSenderId,
+  appId: getEnv('VITE_FIREBASE_APP_ID') || firebaseConfigJson.appId,
 };
 
 const app = getApps().length > 0 ? getApps()[0] : initializeApp(resolvedConfig);

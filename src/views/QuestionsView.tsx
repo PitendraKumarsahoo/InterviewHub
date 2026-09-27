@@ -80,7 +80,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
 
         <button
           onClick={onOpenSubmit}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-lg shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer"
+          className="min-h-[44px] px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-semibold text-xs sm:text-sm rounded-xl shadow-xs transition-all self-start sm:self-auto shrink-0 cursor-pointer touch-manipulation flex items-center justify-center"
         >
           Submit Question
         </button>
@@ -94,16 +94,16 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
           placeholder="Search questions by keyword, topic, or company..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white rounded-lg border border-slate-200/90 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
+          className="w-full min-h-[48px] pl-10 pr-4 py-3 bg-white rounded-xl border border-slate-200/90 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 shadow-2xs transition-all"
         />
       </div>
 
       {/* Filters: Company, Technology, Type, Difficulty */}
-      <div className="flex flex-wrap items-center gap-2 text-xs">
+      <div className="flex flex-wrap items-center gap-2.5 text-xs sm:text-sm">
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="min-h-[44px] px-3.5 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium touch-manipulation"
         >
           {questionTypes.map((t) => (
             <option key={t} value={t}>
@@ -115,7 +115,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={techFilter}
           onChange={(e) => setTechFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="min-h-[44px] px-3.5 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium touch-manipulation"
         >
           {allTechs.map((tech) => (
             <option key={tech} value={tech}>
@@ -127,7 +127,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={difficultyFilter}
           onChange={(e) => setDifficultyFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="min-h-[44px] px-3.5 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium touch-manipulation"
         >
           {difficulties.map((d) => (
             <option key={d} value={d}>
@@ -139,7 +139,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <select
           value={companyFilter}
           onChange={(e) => setCompanyFilter(e.target.value)}
-          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+          className="min-h-[44px] px-3.5 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium touch-manipulation"
         >
           {allCompanies.map((c) => (
             <option key={c} value={c}>
@@ -157,7 +157,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
               setCompanyFilter('All');
               setSearch('');
             }}
-            className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold ml-1 cursor-pointer"
+            className="min-h-[44px] inline-flex items-center text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 font-semibold px-2 cursor-pointer touch-manipulation"
           >
             Clear filters
           </button>
@@ -167,8 +167,24 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
       {/* Question List (Compact rows) */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-xs sm:text-sm">
-            No questions found matching your filter criteria.
+          <div className="p-10 sm:p-14 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 space-y-3 shadow-2xs">
+            <h3 className="font-bold text-slate-900 text-base">
+              {questions.length === 0 ? 'No interview questions added yet — be the first to share an experience' : 'No questions found matching your filter criteria'}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto">
+              {questions.length === 0
+                ? 'Submit technical, coding, or HR questions asked during placement drives to build the university bank.'
+                : 'Try adjusting your search criteria or resetting filters.'}
+            </p>
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={onOpenSubmit}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white rounded-lg text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer"
+              >
+                Share Experience
+              </button>
+            </div>
           </div>
         ) : (
           filtered.map((q) => {

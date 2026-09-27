@@ -64,6 +64,8 @@ export interface InterviewExperience {
 
 export interface Question {
   id: string;
+  userId?: string;
+  authorName?: string;
   companyId?: string;
   companyName?: string;
   experienceId?: string;
