@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { InterviewExperience, Question, Answer } from '../types';
+import { StatusTag, VisualProgressTracker } from '../components/StatusIndicator';
 
 interface ProfileViewProps {
   allExperiences?: InterviewExperience[];
@@ -244,30 +245,32 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <div
                     key={exp.id}
                     onClick={() => onSelectExperience(exp)}
-                    className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-slate-300 transition-all cursor-pointer group flex flex-col justify-between"
+                    className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-indigo-300 transition-all cursor-pointer group flex flex-col justify-between space-y-3"
                   >
-                    <div className="space-y-1.5">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-semibold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
-                          {exp.companyName}
-                        </h3>
-                        <span
-                          className={`px-2 py-0.5 text-[11px] font-medium rounded ${
-                            exp.result === 'Selected'
-                              ? 'bg-emerald-50 text-emerald-700'
-                              : 'bg-rose-50 text-rose-700'
-                          }`}
-                        >
-                          {exp.result}
-                        </span>
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="font-semibold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                            {exp.companyName}
+                          </h3>
+                          <p className="text-xs text-slate-500">{exp.role} · {exp.interviewType}</p>
+                        </div>
+                        <StatusTag result={exp.result} size="xs" showDot={true} showPulse={true} />
                       </div>
-                      <p className="text-xs text-slate-500">{exp.role} · {exp.interviewType}</p>
+
+                      <VisualProgressTracker
+                        result={exp.result}
+                        roundsCount={exp.rounds.length}
+                        rounds={exp.rounds}
+                        compact={true}
+                      />
+
                       <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                         {exp.experienceText}
                       </p>
                     </div>
 
-                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                       <span>{exp.rounds.length} rounds</span>
                       <span className="text-indigo-600 font-medium">View details →</span>
                     </div>
@@ -299,14 +302,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   <div
                     key={exp.id}
                     onClick={() => onSelectExperience(exp)}
-                    className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-slate-300 transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-indigo-300 transition-all cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                   >
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
                           {exp.companyName}
                         </h3>
                         <span className="text-xs text-slate-500">· {exp.role}</span>
+                        <StatusTag result={exp.result} size="xs" showDot={true} showPulse={true} />
                         <span
                           className={`px-2 py-0.5 text-[10px] font-medium rounded ${
                             exp.status === 'approved'

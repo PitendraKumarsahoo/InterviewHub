@@ -36,12 +36,6 @@ import {
   arrayRemove
 } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from './lib/firestoreErrors';
-import {
-  checkAndSeedInitialData,
-  INITIAL_COMPANIES,
-  INITIAL_EXPERIENCES,
-  INITIAL_QUESTIONS
-} from './lib/seedData';
 
 function MainApp() {
   const { user, isAdmin, signInWithGoogle, toggleBookmarkExperience } = useAuth();
@@ -55,77 +49,67 @@ function MainApp() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [questionsFilterParam, setQuestionsFilterParam] = useState<string | undefined>(undefined);
 
-  // Firestore collections with initial baseline data
-  const [companies, setCompanies] = useState<Company[]>(INITIAL_COMPANIES);
-  const [experiences, setExperiences] = useState<InterviewExperience[]>(INITIAL_EXPERIENCES);
-  const [questions, setQuestions] = useState<Question[]>(INITIAL_QUESTIONS);
+  // Live Firestore state — pure live data only, starts completely empty
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [experiences, setExperiences] = useState<InterviewExperience[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
 
-  // Seed check: ONLY run when verified admin is signed in
-  useEffect(() => {
-    if (isAdmin) {
-      checkAndSeedInitialData().catch((e) => {
-        console.warn('Admin seed attempt:', e);
-      });
-    }
-  }, [isAdmin]);
-
-  // Listen to companies
+  // Listen to companies in real-time
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, 'companies'),
       (snapshot) => {
-        if (!snapshot.empty) {
-          const comps: Company[] = [];
-          snapshot.forEach((doc) => comps.push(doc.data() as Company));
-          setCompanies(comps);
-        }
+        const comps: Company[] = [];
+        snapshot.forEach((doc) => comps.push(doc.data() as Company));
+        comps.sort((a, b) => (b.experienceCount || 0) - (a.experienceCount || 0));
+        setCompanies(comps);
         setLoadingInitial(false);
       },
       (error) => {
         console.warn('Companies snapshot notice:', error);
+        setCompanies([]);
+        setLoadingInitial(false);
       }
     );
     return () => unsubscribe();
   }, []);
 
-  // Listen to approved experiences
+  // Listen to approved experiences in real-time
   useEffect(() => {
     const q = query(collection(db, 'experiences'), where('status', '==', 'approved'));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        if (!snapshot.empty) {
-          const exps: InterviewExperience[] = [];
-          snapshot.forEach((doc) => exps.push(doc.data() as InterviewExperience));
-          // Sort newest first
-          exps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          setExperiences(exps);
-        }
+        const exps: InterviewExperience[] = [];
+        snapshot.forEach((doc) => exps.push(doc.data() as InterviewExperience));
+        // Sort newest first
+        exps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setExperiences(exps);
       },
       (error) => {
         console.warn('Experiences snapshot notice:', error);
+        setExperiences([]);
       }
     );
     return () => unsubscribe();
   }, []);
 
-  // Listen to approved questions
+  // Listen to approved questions in real-time
   useEffect(() => {
     const q = query(collection(db, 'questions'), where('status', '==', 'approved'));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        if (!snapshot.empty) {
-          const qs: Question[] = [];
-          snapshot.forEach((doc) => qs.push(doc.data() as Question));
-          // Sort highest asked first
-          qs.sort((a, b) => b.askedCount - a.askedCount);
-          setQuestions(qs);
-        }
+        const qs: Question[] = [];
+        snapshot.forEach((doc) => qs.push(doc.data() as Question));
+        // Sort highest asked first
+        qs.sort((a, b) => (b.askedCount || 0) - (a.askedCount || 0));
+        setQuestions(qs);
       },
       (error) => {
         console.warn('Questions snapshot notice:', error);
+        setQuestions([]);
       }
     );
     return () => unsubscribe();

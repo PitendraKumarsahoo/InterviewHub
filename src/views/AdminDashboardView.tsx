@@ -23,6 +23,7 @@ import {
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
 import { InterviewExperience, Company } from '../types';
 import { checkAndSeedInitialData } from '../lib/seedData';
+import { StatusTag } from '../components/StatusIndicator';
 
 interface AdminDashboardViewProps {
   onRefreshData: () => void;
@@ -255,11 +256,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onRefres
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <h3 className="font-semibold text-slate-900 text-sm">
-                        {exp.companyName} · {exp.role}
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        {exp.authorCollege || 'Campus drive'} · {exp.interviewType} · {exp.result}
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-900 text-sm">
+                          {exp.companyName} · {exp.role}
+                        </h3>
+                        <StatusTag result={exp.result} size="xs" showDot={true} />
+                      </div>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {exp.authorCollege || 'Campus drive'} · {exp.interviewType}
                       </p>
                     </div>
 

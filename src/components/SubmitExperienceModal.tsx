@@ -24,6 +24,7 @@ import { db } from '../lib/firebase';
 import { collection, doc, setDoc, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../lib/firestoreErrors';
 import { Company, InterviewType, InterviewResult, DifficultyLevel, RoundDetail } from '../types';
+import { StatusTag, parseApplicantStatus } from './StatusIndicator';
 
 interface SubmitExperienceModalProps {
   isOpen: boolean;
@@ -1177,9 +1178,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
                   What was your final result? *
                 </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {(['Selected', 'Not Selected', 'Waitlisted', 'Prefer not to say'] as InterviewResult[]).map((res) => {
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {(['Selected', 'Not Selected', 'Still Waiting', 'Waitlisted', 'Prefer not to say'] as InterviewResult[]).map((res) => {
                     const isSelected = result === res;
+                    const statusCfg = parseApplicantStatus(res);
                     return (
                       <button
                         type="button"
@@ -1187,33 +1189,35 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                         onClick={() => setResult(res)}
                         className={`p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
                           isSelected
-                            ? res === 'Selected'
-                              ? 'bg-emerald-50 border-emerald-600 text-emerald-900 font-semibold'
-                              : res === 'Not Selected'
-                              ? 'bg-rose-50 border-rose-600 text-rose-900 font-semibold'
-                              : 'bg-indigo-50 border-indigo-600 text-indigo-900 font-semibold'
+                            ? `${statusCfg.badgeBg} ${statusCfg.badgeBorder} ${statusCfg.badgeText} ring-2 ring-indigo-500/20 shadow-xs font-semibold`
                             : 'border-slate-200 text-slate-700 hover:bg-slate-50'
                         }`}
                       >
-                        <span>{res}</span>
-                        {isSelected && <Check className="w-4 h-4" />}
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${statusCfg.dotBg}`} />
+                          <span className="text-xs">{res}</span>
+                        </div>
+                        {isSelected && <Check className="w-4 h-4 shrink-0" />}
                       </button>
                     );
                   })}
                 </div>
                 <p className="text-[11px] text-slate-500 mt-2">
-                  Tip: Rejection experiences are just as valuable! Sharing where you encountered bottlenecks helps fellow students know what to improve.
+                  Tip: Rejection and in-progress experiences are just as valuable! Sharing where you encountered bottlenecks helps fellow students prepare better.
                 </p>
               </div>
 
               {/* Clean Preview Card with direct 1-click edit links */}
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3.5">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Submission Summary
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                      Submission Summary
+                    </span>
+                    <StatusTag result={result} size="xs" showDot={true} showPulse={true} />
+                  </div>
                   <span className="text-[11px] text-indigo-600 font-medium">
-                    Click [Edit] on any section to change it directly
+                    Click [Edit] to modify any section
                   </span>
                 </div>
 
@@ -1230,7 +1234,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors"
+                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-200 px-2.5 py-1 rounded-lg shadow-2xs hover:bg-indigo-50 transition-colors cursor-pointer"
                   >
                     Edit Company &amp; Role
                   </button>

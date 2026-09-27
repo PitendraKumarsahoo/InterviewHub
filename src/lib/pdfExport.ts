@@ -67,8 +67,10 @@ export function exportExperiencePDF(
             textColor:
               experience.result === 'Selected'
                 ? [16, 185, 129] // Emerald
-                : experience.result === 'Not Selected'
+                : experience.result === 'Not Selected' || experience.result === 'Rejected'
                 ? [225, 29, 72] // Rose
+                : experience.result === 'Still Waiting' || experience.result === 'Waitlisted'
+                ? [217, 119, 6] // Amber
                 : [79, 70, 229],
           },
         },

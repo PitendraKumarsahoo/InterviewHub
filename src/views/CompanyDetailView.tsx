@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { Company, InterviewExperience, Question } from '../types';
 import { exportExperiencePDF } from '../lib/pdfExport';
+import { StatusTag, VisualProgressTracker, parseApplicantStatus } from '../components/StatusIndicator';
 
 interface CompanyDetailViewProps {
   company: Company;
@@ -69,8 +70,14 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
   const availableRoles = ['All', ...Array.from(new Set(companyExperiences.map((e) => e.role)))];
 
   const filteredExperiences = companyExperiences.filter((exp) => {
+    const statusCfg = parseApplicantStatus(exp.result);
     const matchesRole = roleFilter === 'All' || exp.role === roleFilter;
-    const matchesResult = resultFilter === 'All' || exp.result === resultFilter;
+    const matchesResult =
+      resultFilter === 'All' ||
+      (resultFilter === 'Selected' && statusCfg.type === 'selected') ||
+      (resultFilter === 'Not Selected' && statusCfg.type === 'rejected') ||
+      (resultFilter === 'Waiting' && statusCfg.type === 'waiting') ||
+      exp.result === resultFilter;
     const matchesType = typeFilter === 'All' || exp.interviewType === typeFilter;
     return matchesRole && matchesResult && matchesType;
   });
@@ -254,7 +261,8 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
             >
               <option value="All">All Results</option>
               <option value="Selected">Selected</option>
-              <option value="Not Selected">Not Selected</option>
+              <option value="Waiting">Still Waiting / In Progress</option>
+              <option value="Not Selected">Not Selected / Rejected</option>
             </select>
           </div>
         </div>
@@ -270,7 +278,7 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
               <div
                 key={exp.id}
                 onClick={() => onSelectExperience(exp)}
-                className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-slate-300 hover:shadow-xs transition-all cursor-pointer group space-y-2.5"
+                className="p-4 bg-white rounded-xl border border-slate-200/90 hover:border-indigo-300 hover:shadow-xs transition-all cursor-pointer group space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
@@ -285,16 +293,16 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
                     </span>
                   </div>
 
-                  <span
-                    className={`px-2 py-0.5 text-[11px] font-medium rounded self-start sm:self-auto ${
-                      exp.result === 'Selected'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        : 'bg-rose-50 text-rose-700 border border-rose-200'
-                    }`}
-                  >
-                    {exp.result}
-                  </span>
+                  <StatusTag result={exp.result} size="sm" showDot={true} showPulse={true} />
                 </div>
+
+                {/* Visual Progress Indicator */}
+                <VisualProgressTracker
+                  result={exp.result}
+                  roundsCount={exp.rounds.length}
+                  rounds={exp.rounds}
+                  compact={true}
+                />
 
                 <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                   {exp.experienceText}

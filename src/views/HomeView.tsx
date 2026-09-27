@@ -15,6 +15,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import { Company, InterviewExperience, Question } from '../types';
+import { StatusTag, VisualProgressTracker } from '../components/StatusIndicator';
 
 interface HomeViewProps {
   companies: Company[];
@@ -43,44 +44,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [searchInput, setSearchInput] = useState('');
   const [activeFilter, setActiveFilter] = useState('All');
 
-  // Statistics derived dynamically
+  // Statistics derived dynamically from live collections
   const totalCompaniesCount = companies.length;
   const totalExperiencesCount = experiences.length;
   const totalQuestionsCount = questions.length;
-  const totalStudentsCount = Math.max(4, totalExperiencesCount * 2 + 3);
 
   // Top repeated questions for the live hero widget
-  const topRepeatedQuestions = [...questions]
-    .sort((a, b) => b.askedCount - a.askedCount)
+  const heroQuestions = [...questions]
+    .sort((a, b) => (b.askedCount || 0) - (a.askedCount || 0))
     .slice(0, 3);
-
-  // Fallback items if database questions are minimal
-  const heroQuestions = [
-    topRepeatedQuestions[0] || {
-      id: 'q1',
-      companyId: '1',
-      questionText: 'Invert a linked list in place',
-      type: 'Coding',
-      technology: 'Python',
-      askedCount: 12,
-    },
-    topRepeatedQuestions[1] || {
-      id: 'q2',
-      companyId: '2',
-      questionText: "Explain your project's hardest bug",
-      type: 'HR',
-      technology: 'GD round',
-      askedCount: 9,
-    },
-    topRepeatedQuestions[2] || {
-      id: 'q3',
-      companyId: '3',
-      questionText: 'Design a URL shortener',
-      type: 'Technical',
-      technology: 'System design',
-      askedCount: 7,
-    },
-  ];
+  const topRepeatedQuestions = heroQuestions;
 
   const filterOptions = [
     'All',
@@ -205,48 +178,55 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             {/* Questions List */}
             <div className="space-y-2.5">
-              {heroQuestions.map((q, idx) => {
-                const isFirst = idx === 0;
-                const isSecond = idx === 1;
+              {heroQuestions.length > 0 ? (
+                heroQuestions.map((q, idx) => {
+                  const isFirst = idx === 0;
+                  const isSecond = idx === 1;
 
-                return (
-                  <div
-                    key={q.id || idx}
-                    onClick={() => {
-                      const match = questions.find((item) => item.id === q.id);
-                      if (match) {
-                        onSelectQuestion(match);
-                      } else {
-                        onSelectTab('questions', q.questionText);
-                      }
-                    }}
-                    className="p-3.5 rounded-2xl bg-[#FAF8F5] hover:bg-[#F3EFE9] border border-[#F3EFE9] hover:border-[#EAE4DC] transition-colors cursor-pointer flex items-start gap-3 group"
-                  >
-                    {/* Index Badge */}
+                  return (
                     <div
-                      className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                        isFirst
-                          ? 'bg-[#EDE9FE] text-[#4F46E5]'
-                          : isSecond
-                          ? 'bg-[#FFEDD5] text-[#EA580C]'
-                          : 'bg-[#F1F5F9] text-slate-700'
-                      }`}
+                      key={q.id || idx}
+                      onClick={() => {
+                        const match = questions.find((item) => item.id === q.id);
+                        if (match) {
+                          onSelectQuestion(match);
+                        } else {
+                          onSelectTab('questions', q.questionText);
+                        }
+                      }}
+                      className="p-3.5 rounded-2xl bg-[#FAF8F5] hover:bg-[#F3EFE9] border border-[#F3EFE9] hover:border-[#EAE4DC] transition-colors cursor-pointer flex items-start gap-3 group"
                     >
-                      {idx + 1}
-                    </div>
+                      {/* Index Badge */}
+                      <div
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                          isFirst
+                            ? 'bg-[#EDE9FE] text-[#4F46E5]'
+                            : isSecond
+                            ? 'bg-[#FFEDD5] text-[#EA580C]'
+                            : 'bg-[#F1F5F9] text-slate-700'
+                        }`}
+                      >
+                        {idx + 1}
+                      </div>
 
-                    {/* Question Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-[#0F172A] text-sm group-hover:text-[#EA580C] transition-colors line-clamp-1">
-                        {q.questionText}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {q.technology || q.type} · {q.askedCount} asks
-                      </p>
+                      {/* Question Content */}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-[#0F172A] text-sm group-hover:text-[#EA580C] transition-colors line-clamp-1">
+                          {q.questionText}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {q.technology || q.type} · {q.askedCount} asks
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              ) : (
+                <div className="py-6 px-4 rounded-xl bg-[#FAF8F5] border border-[#F3EFE9] text-center text-xs text-slate-500">
+                  <p className="font-medium text-slate-700">No questions recorded yet</p>
+                  <p className="text-slate-400 mt-0.5">Be the first to share questions from campus drives!</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -319,42 +299,50 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {popularCompanies.map((company) => (
-            <div
-              key={company.id}
-              onClick={() => onSelectCompany(company.id)}
-              className="p-5 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
-            >
-              <div>
-                <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm group-hover:bg-orange-600 transition-colors shadow-2xs">
-                    {company.name.charAt(0)}
+        {popularCompanies.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {popularCompanies.map((company) => (
+              <div
+                key={company.id}
+                onClick={() => onSelectCompany(company.id)}
+                className="p-5 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
+              >
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm group-hover:bg-orange-600 transition-colors shadow-2xs">
+                      {company.name.charAt(0)}
+                    </div>
+                    <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-[#FAF8F5] text-slate-600 border border-[#EAE4DC]">
+                      {company.type}
+                    </span>
                   </div>
-                  <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-[#FAF8F5] text-slate-600 border border-[#EAE4DC]">
-                    {company.type}
+
+                  <h3 className="font-bold text-slate-900 text-base group-hover:text-orange-600 transition-colors line-clamp-1">
+                    {company.name}
+                  </h3>
+                  <span className="text-xs text-slate-500 block mb-2 font-medium">
+                    {company.category}
                   </span>
+
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                    {company.description}
+                  </p>
                 </div>
 
-                <h3 className="font-bold text-slate-900 text-base group-hover:text-orange-600 transition-colors line-clamp-1">
-                  {company.name}
-                </h3>
-                <span className="text-xs text-slate-500 block mb-2 font-medium">
-                  {company.category}
-                </span>
-
-                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-                  {company.description}
-                </p>
+                <div className="mt-4 pt-3 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <span>{company.experienceCount} Experiences</span>
+                  <span>{company.questionCount} Questions</span>
+                </div>
               </div>
-
-              <div className="mt-4 pt-3 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500 font-medium">
-                <span>{company.experienceCount} Experiences</span>
-                <span>{company.questionCount} Questions</span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-white rounded-2xl border border-[#EAE4DC] text-slate-500 text-sm">
+            <Building2 className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="font-semibold text-slate-700">No companies listed yet</p>
+            <p className="text-xs text-slate-400 mt-1">Companies appear as interview debriefs and questions are submitted.</p>
+          </div>
+        )}
       </section>
 
       {/* 4. RECENT INTERVIEW EXPERIENCES */}
@@ -377,66 +365,76 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {filteredExperiences.slice(0, 3).map((exp) => (
-            <div
-              key={exp.id}
-              onClick={() => onSelectExperience(exp)}
-              className="p-5 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-bold text-slate-900 text-base group-hover:text-orange-600 transition-colors">
-                      {exp.companyName}
-                    </h3>
-                    <span className="text-xs text-slate-500 font-medium">
-                      {exp.role} · {exp.interviewType}
-                    </span>
+        {filteredExperiences.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {filteredExperiences.slice(0, 3).map((exp) => (
+              <div
+                key={exp.id}
+                onClick={() => onSelectExperience(exp)}
+                className="p-5 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base group-hover:text-orange-600 transition-colors">
+                        {exp.companyName}
+                      </h3>
+                      <span className="text-xs text-slate-500 font-medium">
+                        {exp.role} · {exp.interviewType}
+                      </span>
+                    </div>
+                    <StatusTag result={exp.result} size="sm" showDot={true} showPulse={true} />
                   </div>
-                  <span
-                    className={`px-2 py-0.5 text-xs font-semibold rounded-md shrink-0 ${
-                      exp.result === 'Selected'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
-                        : exp.result === 'Not Selected'
-                        ? 'bg-rose-50 text-rose-700 border border-rose-200/80'
-                        : 'bg-orange-50 text-orange-700 border border-orange-200/80'
-                    }`}
-                  >
-                    {exp.result}
+
+                  {/* Visual Progress Indicator */}
+                  <VisualProgressTracker
+                    result={exp.result}
+                    roundsCount={exp.rounds.length}
+                    rounds={exp.rounds}
+                    compact={true}
+                  />
+
+                  <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                    {exp.experienceText}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {exp.technologies.slice(0, 3).map((t) => (
+                      <span
+                        key={t}
+                        className="px-2 py-0.5 text-[11px] font-medium bg-[#FAF8F5] text-slate-700 rounded-md border border-[#EAE4DC]"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                    {exp.technologies.length > 3 && (
+                      <span className="px-2 py-0.5 text-[11px] text-slate-400 font-medium">
+                        +{exp.technologies.length - 3}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500">
+                  <span className="font-medium">{exp.rounds.length} Interview Rounds</span>
+                  <span className="text-orange-600 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                    View Experience →
                   </span>
                 </div>
-
-                <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
-                  {exp.experienceText}
-                </p>
-
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {exp.technologies.slice(0, 3).map((t) => (
-                    <span
-                      key={t}
-                      className="px-2 py-0.5 text-[11px] font-medium bg-[#FAF8F5] text-slate-700 rounded-md border border-[#EAE4DC]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                  {exp.technologies.length > 3 && (
-                    <span className="px-2 py-0.5 text-[11px] text-slate-400 font-medium">
-                      +{exp.technologies.length - 3}
-                    </span>
-                  )}
-                </div>
               </div>
-
-              <div className="mt-4 pt-3 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500">
-                <span className="font-medium">{exp.rounds.length} Interview Rounds</span>
-                <span className="text-orange-600 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                  View Experience →
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-white rounded-2xl border border-[#EAE4DC] text-slate-500 text-sm">
+            <FileText className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="font-semibold text-slate-700">No interview debriefs yet</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {activeFilter === 'All'
+                ? 'Share your placement drive experience to help other candidates!'
+                : `No experiences found for "${activeFilter}". Try choosing "All".`}
+            </p>
+          </div>
+        )}
       </section>
 
       {/* 5. TOP REPEATED QUESTIONS */}
@@ -459,46 +457,58 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-          {filteredQuestions.slice(0, 4).map((q, idx) => (
-            <div
-              key={q.id}
-              onClick={() => onSelectQuestion(q)}
-              className="p-4 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400">
-                      0{idx + 1}
-                    </span>
-                    <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-[#FAF8F5] text-slate-700 border border-[#EAE4DC]">
-                      {q.type} {q.technology ? `· ${q.technology}` : ''}
+        {filteredQuestions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {filteredQuestions.slice(0, 4).map((q, idx) => (
+              <div
+                key={q.id}
+                onClick={() => onSelectQuestion(q)}
+                className="p-4 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-400">
+                        0{idx + 1}
+                      </span>
+                      <span className="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-[#FAF8F5] text-slate-700 border border-[#EAE4DC]">
+                        {q.type} {q.technology ? `· ${q.technology}` : ''}
+                      </span>
+                    </div>
+                    <span className="px-2 py-0.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200/70 rounded-md">
+                      Asked {q.askedCount} times
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200/70 rounded-md">
-                    Asked {q.askedCount} times
-                  </span>
+
+                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+                    {q.questionText}
+                  </h3>
                 </div>
 
-                <h3 className="text-sm font-semibold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
-                  {q.questionText}
-                </h3>
+                <div className="mt-3 pt-2.5 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500">
+                  <span className="truncate max-w-[70%] font-medium">
+                    {q.companiesAsked && q.companiesAsked.length > 0
+                      ? `Companies: ${q.companiesAsked.slice(0, 3).join(' · ')}`
+                      : 'Reported in multiple interview rounds'}
+                  </span>
+                  <span className="text-orange-600 font-semibold group-hover:translate-x-0.5 transition-transform shrink-0">
+                    View →
+                  </span>
+                </div>
               </div>
-
-              <div className="mt-3 pt-2.5 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500">
-                <span className="truncate max-w-[70%] font-medium">
-                  {q.companiesAsked && q.companiesAsked.length > 0
-                    ? `Companies: ${q.companiesAsked.slice(0, 3).join(' · ')}`
-                    : 'Reported in multiple interview rounds'}
-                </span>
-                <span className="text-orange-600 font-semibold group-hover:translate-x-0.5 transition-transform shrink-0">
-                  View →
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center bg-white rounded-2xl border border-[#EAE4DC] text-slate-500 text-sm">
+            <HelpCircle className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="font-semibold text-slate-700">No interview questions yet</p>
+            <p className="text-xs text-slate-400 mt-1">
+              {activeFilter === 'All'
+                ? 'Submit technical, coding, or HR questions asked during your interviews.'
+                : `No questions found for "${activeFilter}".`}
+            </p>
+          </div>
+        )}
       </section>
 
       {/* 6. CALL TO ACTION BANNER (Clean, Non-Slop, No Pill) */}

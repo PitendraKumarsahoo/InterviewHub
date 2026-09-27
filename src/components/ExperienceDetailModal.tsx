@@ -13,6 +13,7 @@ import { InterviewExperience, PreparePlan } from '../types';
 import { generatePreparationPlan } from '../lib/gemini';
 import { useAuth } from '../context/AuthContext';
 import { exportExperiencePDF } from '../lib/pdfExport';
+import { StatusTag, VisualProgressTracker } from './StatusIndicator';
 
 interface ExperienceDetailModalProps {
   experience: InterviewExperience | null;
@@ -109,19 +110,11 @@ export const ExperienceDetailModal: React.FC<ExperienceDetailModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span
-              className={`px-2.5 py-0.5 text-xs font-medium rounded ${
-                experience.result === 'Selected'
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
-              }`}
-            >
-              {experience.result}
-            </span>
+            <StatusTag result={experience.result} size="md" showDot={true} showPulse={true} />
 
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ml-1"
+              className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors ml-1 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -130,6 +123,13 @@ export const ExperienceDetailModal: React.FC<ExperienceDetailModalProps> = ({
 
         {/* Article Body */}
         <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 text-slate-800 text-sm">
+          {/* Visual Progress & Stage Pipeline Indicator */}
+          <VisualProgressTracker
+            result={experience.result}
+            rounds={experience.rounds}
+            compact={false}
+          />
+
           {/* Action row (Upvote, Bookmark, Copy) */}
           <div className="flex items-center justify-between py-2 border-b border-slate-100 text-xs text-slate-600">
             <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 export type InterviewType = 'Campus' | 'Off-campus' | 'Internship' | 'PPO';
-export type InterviewResult = 'Selected' | 'Not Selected' | 'Waitlisted' | 'Prefer not to say';
+export type InterviewResult = 'Selected' | 'Not Selected' | 'Rejected' | 'Waitlisted' | 'Still Waiting' | 'Prefer not to say';
 export type DifficultyLevel = 'Easy' | 'Moderate' | 'Difficult';
 export type QuestionType = 'Technical' | 'Coding' | 'Aptitude' | 'GD' | 'HR' | 'Other';
 export type ModerationStatus = 'pending' | 'approved' | 'rejected';

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Search, ChevronRight, Download } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, ChevronRight, Download, Filter, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { InterviewExperience, Company } from '../types';
 import { exportExperiencePDF } from '../lib/pdfExport';
+import { StatusTag, VisualProgressTracker, parseApplicantStatus } from '../components/StatusIndicator';
 
 interface ExperiencesViewProps {
   experiences: InterviewExperience[];
@@ -43,6 +44,24 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
     ...Array.from(new Set(experiences.flatMap((e) => e.technologies || []))),
   ];
 
+  const statusCounts = useMemo(() => {
+    let selected = 0;
+    let waiting = 0;
+    let rejected = 0;
+    experiences.forEach((e) => {
+      const cfg = parseApplicantStatus(e.result);
+      if (cfg.type === 'selected') selected++;
+      else if (cfg.type === 'waiting') waiting++;
+      else if (cfg.type === 'rejected') rejected++;
+    });
+    return {
+      all: experiences.length,
+      selected,
+      waiting,
+      rejected,
+    };
+  }, [experiences]);
+
   const filtered = experiences.filter((exp) => {
     const query = search.toLowerCase();
     const expYear = exp.year ? exp.year.toString() : new Date(exp.createdAt).getFullYear().toString();
@@ -51,10 +70,16 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
       exp.role.toLowerCase().includes(query) ||
       exp.experienceText.toLowerCase().includes(query);
 
+    const statusCfg = parseApplicantStatus(exp.result);
     const matchesCompany = companyFilter === 'All' || exp.companyName === companyFilter;
     const matchesRole = roleFilter === 'All' || exp.role === roleFilter;
     const matchesYear = yearFilter === 'All' || expYear === yearFilter;
-    const matchesResult = resultFilter === 'All' || exp.result === resultFilter;
+    const matchesResult =
+      resultFilter === 'All' ||
+      (resultFilter === 'Selected' && statusCfg.type === 'selected') ||
+      (resultFilter === 'Not Selected' && statusCfg.type === 'rejected') ||
+      (resultFilter === 'Waiting' && statusCfg.type === 'waiting') ||
+      exp.result === resultFilter;
     const matchesType = typeFilter === 'All' || exp.interviewType === typeFilter;
     const matchesDiff = diffFilter === 'All' || exp.difficulty === diffFilter;
     const matchesTech = techFilter === 'All' || exp.technologies?.includes(techFilter);
@@ -104,7 +129,82 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         />
       </div>
 
-      {/* Filters: Company, Role, Year, Result, Interview Type, Difficulty, Technology */}
+      {/* Status Filter Tabs (Color-Coded for Instant Readability) */}
+      <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+        <span className="text-xs font-semibold text-slate-500 mr-1 flex items-center gap-1">
+          <Filter className="w-3.5 h-3.5 text-slate-400" />
+          Filter by Status:
+        </span>
+
+        <button
+          onClick={() => setResultFilter('All')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            resultFilter === 'All'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <span>All Statuses</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            resultFilter === 'All' ? 'bg-slate-700 text-white' : 'bg-slate-100 text-slate-600'
+          }`}>
+            {statusCounts.all}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setResultFilter(resultFilter === 'Selected' ? 'All' : 'Selected')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            resultFilter === 'Selected'
+              ? 'bg-emerald-600 text-white shadow-xs ring-2 ring-emerald-500/20'
+              : 'bg-emerald-50 text-emerald-800 border border-emerald-200/90 hover:bg-emerald-100/70'
+          }`}
+        >
+          <CheckCircle2 className={`w-3.5 h-3.5 ${resultFilter === 'Selected' ? 'text-white' : 'text-emerald-600'}`} />
+          <span>Selected</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            resultFilter === 'Selected' ? 'bg-emerald-700 text-white' : 'bg-emerald-100 text-emerald-800'
+          }`}>
+            {statusCounts.selected}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setResultFilter(resultFilter === 'Waiting' ? 'All' : 'Waiting')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            resultFilter === 'Waiting'
+              ? 'bg-amber-600 text-white shadow-xs ring-2 ring-amber-500/20'
+              : 'bg-amber-50 text-amber-900 border border-amber-200/90 hover:bg-amber-100/70'
+          }`}
+        >
+          <Clock className={`w-3.5 h-3.5 ${resultFilter === 'Waiting' ? 'text-white' : 'text-amber-600'}`} />
+          <span>Still Waiting</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            resultFilter === 'Waiting' ? 'bg-amber-700 text-white' : 'bg-amber-100 text-amber-900'
+          }`}>
+            {statusCounts.waiting}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setResultFilter(resultFilter === 'Not Selected' ? 'All' : 'Not Selected')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer flex items-center gap-1.5 ${
+            resultFilter === 'Not Selected'
+              ? 'bg-rose-600 text-white shadow-xs ring-2 ring-rose-500/20'
+              : 'bg-rose-50 text-rose-800 border border-rose-200/90 hover:bg-rose-100/70'
+          }`}
+        >
+          <XCircle className={`w-3.5 h-3.5 ${resultFilter === 'Not Selected' ? 'text-white' : 'text-rose-600'}`} />
+          <span>Not Selected / Rejected</span>
+          <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
+            resultFilter === 'Not Selected' ? 'bg-rose-700 text-white' : 'bg-rose-100 text-rose-800'
+          }`}>
+            {statusCounts.rejected}
+          </span>
+        </button>
+      </div>
+
+      {/* Dropdown Filters: Company, Role, Year, Result, Interview Type, Difficulty, Technology */}
       <div className="flex flex-wrap items-center gap-2 text-xs">
         <select
           value={companyFilter}
@@ -149,7 +249,8 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         >
           <option value="All">All Results</option>
           <option value="Selected">Selected</option>
-          <option value="Not Selected">Not Selected</option>
+          <option value="Waiting">Still Waiting / In Progress</option>
+          <option value="Not Selected">Not Selected / Rejected</option>
         </select>
 
         <select
@@ -214,46 +315,66 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
               <div
                 key={exp.id}
                 onClick={() => onSelectExperience(exp)}
-                className="p-5 bg-white rounded-2xl border border-slate-200/80 hover:border-indigo-200 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
+                className="p-5 bg-white rounded-2xl border border-slate-200/90 hover:border-indigo-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
               >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors">
+                <div className="space-y-3.5">
+                  {/* Card Header with Company & Role and Color-Coded Status Tag */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-slate-900 text-base group-hover:text-indigo-600 transition-colors truncate">
                         {exp.companyName}
                       </h3>
-                      <p className="text-xs text-slate-600 font-medium">
+                      <p className="text-xs text-slate-600 font-medium truncate mt-0.5">
                         {exp.role}
                       </p>
                     </div>
 
-                    {/* Result badge */}
-                    <span
-                      className={`px-2.5 py-0.5 text-xs font-semibold rounded-md shrink-0 ${
-                        exp.result === 'Selected'
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
-                          : 'bg-rose-50 text-rose-700 border border-rose-200/80'
-                      }`}
-                    >
-                      {exp.result}
-                    </span>
+                    {/* Color-Coded Status Tag */}
+                    <StatusTag result={exp.result} size="sm" showDot={true} showPulse={true} />
                   </div>
 
+                  {/* Metadata */}
                   <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <span>{exp.interviewType}</span>
+                    <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[11px] font-semibold">{exp.interviewType}</span>
                     <span>·</span>
                     <span>{yearStr}</span>
+                    {exp.difficulty && (
+                      <>
+                        <span>·</span>
+                        <span className="text-slate-600 font-medium">{exp.difficulty}</span>
+                      </>
+                    )}
                   </div>
 
+                  {/* Visual Progress Indicator */}
+                  <VisualProgressTracker
+                    result={exp.result}
+                    roundsCount={exp.rounds.length}
+                    rounds={exp.rounds}
+                    compact={true}
+                  />
+
                   {/* Rounds Flow */}
-                  <div className="text-xs text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-200/60 line-clamp-1 font-medium">
+                  <div className="text-xs text-slate-700 bg-slate-50/80 px-2.5 py-1.5 rounded-lg border border-slate-200/60 line-clamp-1 font-medium">
                     {roundsFlow || 'Interview Process'}
                   </div>
 
                   {/* Technologies */}
                   {exp.technologies && exp.technologies.length > 0 && (
-                    <div className="text-xs text-slate-500 truncate">
-                      {exp.technologies.slice(0, 4).join(' · ')}
+                    <div className="flex flex-wrap gap-1">
+                      {exp.technologies.slice(0, 4).map((tech) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-700 rounded"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                      {exp.technologies.length > 4 && (
+                        <span className="px-1.5 py-0.5 text-[10px] text-slate-400 font-medium">
+                          +{exp.technologies.length - 4}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
@@ -269,7 +390,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
                         exportExperiencePDF(exp);
                       }}
                       title="Download structured PDF brief for offline prep"
-                      className="px-2 py-1 rounded-md text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors flex items-center gap-1 text-[11px] font-medium border border-slate-200"
+                      className="px-2 py-1 rounded-md text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition-colors flex items-center gap-1 text-[11px] font-medium border border-slate-200 cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5 text-slate-500" />
                       <span>PDF</span>
