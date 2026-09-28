@@ -23,20 +23,46 @@ export function parseApplicantStatus(result?: string | InterviewResult): Applica
       type: 'other',
       label: 'Outcome Unknown',
       shortLabel: 'Unknown',
-      badgeBg: 'bg-slate-50',
-      badgeText: 'text-slate-600',
-      badgeBorder: 'border-slate-200',
-      dotBg: 'bg-slate-400',
-      progressColor: 'bg-slate-400',
-      progressTrack: 'bg-slate-100',
+      badgeBg: 'bg-slate-200 dark:bg-slate-800',
+      badgeText: 'text-slate-900 dark:text-slate-100 font-bold',
+      badgeBorder: 'border-slate-300 dark:border-slate-600',
+      dotBg: 'bg-slate-500',
+      progressColor: 'bg-slate-500',
+      progressTrack: 'bg-slate-200 dark:bg-slate-700',
       progressLabel: 'Status not specified',
     };
   }
 
   const normalized = result.toLowerCase().trim();
 
-  // Selected / Offer received
+  // 1. CRITICAL: Rejected / Not Selected MUST be evaluated FIRST!
+  // Because the string "not selected" contains "select", checking "select" first incorrectly marked "Not Selected" as "Selected"!
   if (
+    normalized.includes('not select') ||
+    normalized.includes('reject') ||
+    normalized.includes('denied') ||
+    normalized.includes('declined') ||
+    normalized.includes('did not get') ||
+    normalized === 'not selected' ||
+    normalized === 'rejected'
+  ) {
+    return {
+      type: 'rejected',
+      label: 'Not Selected',
+      shortLabel: 'Not Selected',
+      badgeBg: 'bg-rose-100 dark:bg-rose-950/60',
+      badgeText: 'text-rose-900 dark:text-rose-100 font-bold',
+      badgeBorder: 'border-rose-300 dark:border-rose-800',
+      dotBg: 'bg-rose-600',
+      progressColor: 'bg-rose-600',
+      progressTrack: 'bg-rose-100 dark:bg-rose-900/30',
+      progressLabel: 'Not Selected · Concluded',
+    };
+  }
+
+  // 2. Selected / Offer received
+  if (
+    normalized === 'selected' ||
     normalized.includes('select') ||
     normalized.includes('offer') ||
     normalized.includes('hired') ||
@@ -46,38 +72,17 @@ export function parseApplicantStatus(result?: string | InterviewResult): Applica
       type: 'selected',
       label: 'Selected',
       shortLabel: 'Selected',
-      badgeBg: 'bg-emerald-50 dark:bg-emerald-950/40',
-      badgeText: 'text-emerald-700 dark:text-emerald-300 font-semibold',
-      badgeBorder: 'border-emerald-200 dark:border-emerald-800',
-      dotBg: 'bg-emerald-500',
-      progressColor: 'bg-emerald-500',
+      badgeBg: 'bg-emerald-100 dark:bg-emerald-950/60',
+      badgeText: 'text-emerald-950 dark:text-emerald-100 font-bold',
+      badgeBorder: 'border-emerald-300 dark:border-emerald-800',
+      dotBg: 'bg-emerald-600',
+      progressColor: 'bg-emerald-600',
       progressTrack: 'bg-emerald-100 dark:bg-emerald-900/30',
       progressLabel: 'Selected · Offer Extended',
     };
   }
 
-  // Rejected / Not Selected
-  if (
-    normalized.includes('not select') ||
-    normalized.includes('reject') ||
-    normalized.includes('denied') ||
-    normalized.includes('declined')
-  ) {
-    return {
-      type: 'rejected',
-      label: 'Not Selected',
-      shortLabel: 'Rejected',
-      badgeBg: 'bg-rose-50 dark:bg-rose-950/40',
-      badgeText: 'text-rose-700 dark:text-rose-300 font-semibold',
-      badgeBorder: 'border-rose-200 dark:border-rose-800',
-      dotBg: 'bg-rose-500',
-      progressColor: 'bg-rose-500',
-      progressTrack: 'bg-rose-100 dark:bg-rose-900/30',
-      progressLabel: 'Not Selected · Concluded',
-    };
-  }
-
-  // Still Waiting / Waitlisted / Pending / In Review
+  // 3. Still Waiting / Waitlisted / Pending / In Review
   if (
     normalized.includes('wait') ||
     normalized.includes('pend') ||
@@ -85,31 +90,32 @@ export function parseApplicantStatus(result?: string | InterviewResult): Applica
     normalized.includes('review') ||
     normalized.includes('process')
   ) {
+    const isWaitlisted = normalized.includes('waitlist');
     return {
       type: 'waiting',
-      label: result === 'Waitlisted' ? 'Waitlisted' : 'Still Waiting',
-      shortLabel: 'Waiting',
-      badgeBg: 'bg-amber-50 dark:bg-amber-950/40',
-      badgeText: 'text-amber-800 dark:text-amber-300 font-semibold',
-      badgeBorder: 'border-amber-200 dark:border-amber-800',
-      dotBg: 'bg-amber-500',
-      progressColor: 'bg-amber-500',
+      label: isWaitlisted ? 'Waitlisted' : 'Still Waiting',
+      shortLabel: isWaitlisted ? 'Waitlisted' : 'Waiting',
+      badgeBg: 'bg-amber-100 dark:bg-amber-950/60',
+      badgeText: 'text-amber-950 dark:text-amber-100 font-bold',
+      badgeBorder: 'border-amber-300 dark:border-amber-800',
+      dotBg: 'bg-amber-600',
+      progressColor: 'bg-amber-600',
       progressTrack: 'bg-amber-100 dark:bg-amber-900/30',
-      progressLabel: 'Awaiting Result · In Progress',
+      progressLabel: isWaitlisted ? 'Waitlisted · Awaiting Updates' : 'Awaiting Result · In Progress',
     };
   }
 
-  // Neutral / Prefer not to say
+  // 4. Neutral / Prefer not to say - Solid, clear, high-contrast Slate so it is never washed out or faint light color!
   return {
     type: 'other',
     label: result || 'Prefer not to say',
-    shortLabel: result || 'Undisclosed',
-    badgeBg: 'bg-slate-50 dark:bg-slate-800/40',
-    badgeText: 'text-slate-600 dark:text-slate-400 font-medium',
-    badgeBorder: 'border-slate-200 dark:border-slate-700',
-    dotBg: 'bg-slate-400',
-    progressColor: 'bg-slate-400',
-    progressTrack: 'bg-slate-100 dark:bg-slate-800',
+    shortLabel: 'Prefer not to say',
+    badgeBg: 'bg-slate-200 dark:bg-slate-800',
+    badgeText: 'text-slate-900 dark:text-slate-100 font-bold',
+    badgeBorder: 'border-slate-300 dark:border-slate-600',
+    dotBg: 'bg-slate-600',
+    progressColor: 'bg-slate-600',
+    progressTrack: 'bg-slate-200 dark:bg-slate-700',
     progressLabel: result || 'Status undisclosed',
   };
 }
@@ -202,7 +208,8 @@ export const VisualProgressTracker: React.FC<VisualProgressTrackerProps> = ({
   className = '',
 }) => {
   const config = parseApplicantStatus(result);
-  const totalRounds = Math.max(1, rounds.length || roundsCount);
+  const safeRounds = Array.isArray(rounds) ? rounds : [];
+  const totalRounds = Math.max(1, safeRounds.length || roundsCount || 1);
 
   // Determine stage progression:
   // If Selected -> 100% finished and cleared
@@ -300,7 +307,7 @@ export const VisualProgressTracker: React.FC<VisualProgressTrackerProps> = ({
           {isRejected && <XCircle className="w-4 h-4 text-rose-600" />}
           {isWaiting && <Clock className="w-4 h-4 text-amber-600" />}
           <span className="text-xs font-bold text-slate-800">
-            Interview Process & Status
+            Interview Process &amp; Status
           </span>
         </div>
 
@@ -310,13 +317,14 @@ export const VisualProgressTracker: React.FC<VisualProgressTrackerProps> = ({
       {/* Visual Rounds Pipeline */}
       <div className="relative pt-1 pb-1">
         <div className="flex items-center justify-between relative z-10">
-          {rounds.map((round, idx) => {
-            const isLastRound = idx === rounds.length - 1;
+          {safeRounds.map((round: any, idx: number) => {
+            const isLastRound = idx === safeRounds.length - 1;
+            const rName = typeof round === 'string' ? round : (round?.roundName || `Round ${idx + 1}`);
 
             return (
               <div key={idx} className="flex-1 flex flex-col items-center text-center relative group">
                 {/* Connecting track line between steps */}
-                {idx < rounds.length - 1 && (
+                {idx < safeRounds.length - 1 && (
                   <div
                     className={`absolute top-3 left-1/2 w-full h-0.5 -z-10 ${
                       isSelected
@@ -349,7 +357,7 @@ export const VisualProgressTracker: React.FC<VisualProgressTrackerProps> = ({
 
                 {/* Round Label */}
                 <span className="text-[11px] font-medium text-slate-700 mt-1 max-w-[85px] truncate">
-                  {round.roundName}
+                  {rName}
                 </span>
               </div>
             );
@@ -365,7 +373,7 @@ export const VisualProgressTracker: React.FC<VisualProgressTrackerProps> = ({
                   ? 'bg-rose-600 text-white border-rose-600'
                   : isWaiting
                   ? 'bg-amber-500 text-white border-amber-500 ring-2 ring-amber-300/60'
-                  : 'bg-slate-300 text-slate-700 border-slate-300'
+                  : 'bg-slate-400 text-white border-slate-400'
               }`}
             >
               {isSelected ? '✓' : isRejected ? '✕' : isWaiting ? '◷' : '?'}

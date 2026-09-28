@@ -420,8 +420,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   {/* Visual Progress Indicator */}
                   <VisualProgressTracker
                     result={exp.result}
-                    roundsCount={exp.rounds.length}
-                    rounds={exp.rounds}
+                    roundsCount={exp.rounds?.length || 0}
+                    rounds={exp.rounds || []}
                     compact={true}
                   />
 
@@ -430,7 +430,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   </p>
 
                   <div className="flex flex-wrap gap-1.5 pt-1">
-                    {exp.technologies.slice(0, 3).map((t) => (
+                    {(exp.technologies || []).slice(0, 3).map((t) => (
                       <span
                         key={t}
                         className="px-2 py-0.5 text-[11px] font-medium bg-[#FAF8F5] text-slate-700 rounded-md border border-[#EAE4DC]"
@@ -438,16 +438,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         {t}
                       </span>
                     ))}
-                    {exp.technologies.length > 3 && (
+                    {(exp.technologies || []).length > 3 && (
                       <span className="px-2 py-0.5 text-[11px] text-slate-400 font-medium">
-                        +{exp.technologies.length - 3}
+                        +{(exp.technologies || []).length - 3}
                       </span>
                     )}
                   </div>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500">
-                  <span className="font-medium">{exp.rounds.length} Interview Rounds</span>
+                  <span className="font-medium">{exp.rounds?.length || 0} Interview Rounds</span>
                   <span className="text-orange-600 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
                     View Experience →
                   </span>

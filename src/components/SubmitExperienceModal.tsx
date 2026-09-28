@@ -774,18 +774,18 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                       type="button"
                       key={round}
                       onClick={() => handleToggleRound(round)}
-                      className={`p-4.5 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      className={`p-4 rounded-2xl border-2 text-left flex items-center justify-between transition-all cursor-pointer touch-manipulation ${
                         isChecked
-                          ? 'border-[#EA580C] bg-orange-50/70 text-slate-900 font-bold shadow-2xs'
-                          : 'border-slate-200 hover:border-slate-300 text-slate-800 hover:bg-slate-50'
+                          ? 'border-orange-600 bg-orange-50 text-slate-950 font-black shadow-xs ring-2 ring-orange-500/20'
+                          : 'border-slate-300 hover:border-slate-500 text-slate-800 bg-white hover:bg-slate-50 font-bold shadow-2xs'
                       }`}
                     >
-                      <span className="text-base sm:text-lg font-semibold">{round}</span>
+                      <span className="text-base sm:text-lg font-bold">{round}</span>
                       <div
-                        className={`w-7 h-7 rounded-xl flex items-center justify-center border transition-colors ${
+                        className={`w-7 h-7 rounded-xl flex items-center justify-center border-2 transition-colors ${
                           isChecked
-                            ? 'bg-[#EA580C] border-[#EA580C] text-white'
-                            : 'border-slate-300 bg-white'
+                            ? 'bg-orange-600 border-orange-600 text-white'
+                            : 'border-slate-400 bg-white'
                         }`}
                       >
                         {isChecked && <Check className="w-4 h-4 stroke-[3]" />}
@@ -934,10 +934,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                             type="button"
                             key={tag}
                             onClick={() => handleToggleTag(tag)}
-                            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base transition-all cursor-pointer flex items-center gap-2 ${
                               isSelected
-                                ? 'bg-[#EA580C] text-white shadow-xs font-bold'
-                                : 'bg-white text-slate-800 border border-slate-200 hover:border-orange-300 hover:bg-slate-50'
+                                ? 'bg-orange-600 text-white shadow-xs font-black border-2 border-orange-600 ring-2 ring-orange-500/20'
+                                : 'bg-white text-slate-800 border-2 border-slate-300 hover:border-slate-500 hover:bg-slate-50 font-bold shadow-2xs'
                             }`}
                           >
                             <span>#{tag}</span>
@@ -963,10 +963,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                             type="button"
                             key={tag}
                             onClick={() => handleToggleTag(tag)}
-                            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                            className={`px-3.5 py-2 rounded-xl text-sm sm:text-base transition-all cursor-pointer flex items-center gap-2 ${
                               isSelected
-                                ? 'bg-[#EA580C] text-white shadow-xs font-bold'
-                                : 'bg-white text-slate-800 border border-slate-200 hover:border-orange-300 hover:bg-slate-50'
+                                ? 'bg-orange-600 text-white shadow-xs font-black border-2 border-orange-600 ring-2 ring-orange-500/20'
+                                : 'bg-white text-slate-800 border-2 border-slate-300 hover:border-slate-500 hover:bg-slate-50 font-bold shadow-2xs'
                             }`}
                           >
                             <span>#{tag}</span>
@@ -1056,10 +1056,10 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                           type="button"
                           key={tech}
                           onClick={() => handleToggleTech(tech)}
-                          className={`px-3.5 py-2 rounded-xl text-sm sm:text-base font-medium transition-all cursor-pointer ${
+                          className={`px-3.5 py-2 rounded-xl text-sm sm:text-base transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-slate-900 text-white shadow-xs font-bold'
-                              : 'bg-slate-100 text-slate-800 hover:bg-slate-200'
+                              ? 'bg-slate-950 border-2 border-slate-950 text-white shadow-xs font-black'
+                              : 'bg-white border-2 border-slate-300 text-slate-900 hover:border-slate-500 hover:bg-slate-50 font-bold shadow-2xs'
                           }`}
                         >
                           {isSelected ? `✓ ${tech}` : `+ ${tech}`}
@@ -1192,26 +1192,78 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
                 <label className="block text-base font-bold text-slate-900 mb-3">
                   What was your final result? *
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                   {(['Selected', 'Not Selected', 'Still Waiting', 'Waitlisted', 'Prefer not to say'] as InterviewResult[]).map((res) => {
                     const isSelected = result === res;
-                    const statusCfg = parseApplicantStatus(res);
+
+                    // High contrast colors and indicators for each choice
+                    let activeStyles = '';
+                    let radioIcon = null;
+                    let pillBadge = null;
+
+                    if (res === 'Selected') {
+                      activeStyles = 'bg-emerald-50 border-2 border-emerald-600 text-emerald-950 ring-2 ring-emerald-500/30 shadow-sm';
+                      radioIcon = (
+                        <div className="w-5 h-5 rounded-full border-2 border-emerald-700 bg-emerald-700 flex items-center justify-center text-white shrink-0">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      );
+                      pillBadge = <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-700 text-white">Offer Received</span>;
+                    } else if (res === 'Not Selected') {
+                      activeStyles = 'bg-rose-50 border-2 border-rose-600 text-rose-950 ring-2 ring-rose-500/30 shadow-sm';
+                      radioIcon = (
+                        <div className="w-5 h-5 rounded-full border-2 border-rose-700 bg-rose-700 flex items-center justify-center text-white shrink-0">
+                          <X className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      );
+                      pillBadge = <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-rose-700 text-white">Concluded</span>;
+                    } else if (res === 'Still Waiting') {
+                      activeStyles = 'bg-amber-50 border-2 border-amber-600 text-amber-950 ring-2 ring-amber-500/30 shadow-sm';
+                      radioIcon = (
+                        <div className="w-5 h-5 rounded-full border-2 border-amber-600 bg-amber-600 flex items-center justify-center text-white shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                      );
+                      pillBadge = <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-700 text-white">In Progress</span>;
+                    } else if (res === 'Waitlisted') {
+                      activeStyles = 'bg-indigo-50 border-2 border-indigo-600 text-indigo-950 ring-2 ring-indigo-500/30 shadow-sm';
+                      radioIcon = (
+                        <div className="w-5 h-5 rounded-full border-2 border-indigo-600 bg-indigo-600 flex items-center justify-center text-white shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                      );
+                      pillBadge = <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-700 text-white">Waitlist</span>;
+                    } else {
+                      // Prefer not to say
+                      activeStyles = 'bg-slate-100 border-2 border-slate-700 text-slate-950 ring-2 ring-slate-400/30 shadow-sm';
+                      radioIcon = (
+                        <div className="w-5 h-5 rounded-full border-2 border-slate-800 bg-slate-800 flex items-center justify-center text-white shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                      );
+                      pillBadge = <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-800 text-white">Confidential</span>;
+                    }
+
                     return (
                       <button
                         type="button"
                         key={res}
                         onClick={() => setResult(res)}
-                        className={`p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        className={`min-h-[56px] p-4 rounded-2xl text-left flex items-center justify-between gap-3 transition-all cursor-pointer touch-manipulation group ${
                           isSelected
-                            ? `${statusCfg.badgeBg} ${statusCfg.badgeBorder} ${statusCfg.badgeText} ring-2 ring-orange-500/30 shadow-xs font-bold`
-                            : 'border-slate-200 text-slate-800 hover:bg-slate-50 font-medium'
+                            ? `${activeStyles} font-black scale-[1.01]`
+                            : 'bg-white border-2 border-slate-300 text-slate-900 hover:bg-slate-50 hover:border-slate-500 font-bold shadow-2xs'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <span className={`w-2.5 h-2.5 rounded-full ${statusCfg.dotBg}`} />
-                          <span className="text-sm sm:text-base">{res}</span>
+                        <div className="flex items-center gap-3">
+                          {isSelected ? (
+                            radioIcon
+                          ) : (
+                            <div className="w-5 h-5 rounded-full border-2 border-slate-400 bg-white group-hover:border-slate-600 shrink-0" />
+                          )}
+                          <span className="text-sm sm:text-base font-extrabold text-slate-900">{res}</span>
                         </div>
-                        {isSelected && <Check className="w-5 h-5 shrink-0 stroke-[2.5]" />}
+                        {isSelected && pillBadge}
                       </button>
                     );
                   })}

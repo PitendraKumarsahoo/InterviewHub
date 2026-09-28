@@ -324,8 +324,13 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
           </div>
         ) : (
           filtered.map((exp) => {
-            const roundsFlow = exp.rounds.map((r) => r.roundName).join(' → ');
-            const yearStr = exp.year || new Date(exp.createdAt).getFullYear();
+            const safeRoundsList = Array.isArray(exp.rounds) ? exp.rounds : [];
+            const roundsFlow = safeRoundsList.map((r: any) => typeof r === 'string' ? r : (r?.roundName || 'Round')).join(' → ');
+            const yearStr = exp.year || (() => {
+              if (!exp.createdAt) return new Date().getFullYear();
+              const d = new Date(exp.createdAt);
+              return isNaN(d.getFullYear()) ? new Date().getFullYear() : d.getFullYear();
+            })();
 
             return (
               <div
@@ -365,8 +370,8 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
                   {/* Visual Progress Indicator */}
                   <VisualProgressTracker
                     result={exp.result}
-                    roundsCount={exp.rounds.length}
-                    rounds={exp.rounds}
+                    roundsCount={safeRoundsList.length}
+                    rounds={safeRoundsList}
                     compact={true}
                   />
 
@@ -397,7 +402,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                   <span className="text-slate-500 font-medium">
-                    {exp.rounds.length} {exp.rounds.length === 1 ? 'round' : 'rounds'}
+                    {safeRoundsList.length} {safeRoundsList.length === 1 ? 'round' : 'rounds'}
                   </span>
                   <div className="flex items-center gap-2">
                     <button

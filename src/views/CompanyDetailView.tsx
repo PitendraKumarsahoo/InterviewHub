@@ -299,8 +299,8 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
                 {/* Visual Progress Indicator */}
                 <VisualProgressTracker
                   result={exp.result}
-                  roundsCount={exp.rounds.length}
-                  rounds={exp.rounds}
+                  roundsCount={exp.rounds?.length || 0}
+                  rounds={exp.rounds || []}
                   compact={true}
                 />
 
@@ -310,7 +310,7 @@ export const CompanyDetailView: React.FC<CompanyDetailViewProps> = ({
 
                 <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 text-xs text-slate-500">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-medium text-slate-700">{exp.rounds.length} Rounds</span>
+                    <span className="font-medium text-slate-700">{exp.rounds?.length || 0} Rounds</span>
                     {exp.technologies && exp.technologies.length > 0 && (
                       <>
                         <span>·</span>

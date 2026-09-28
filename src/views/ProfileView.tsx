@@ -260,8 +260,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
                       <VisualProgressTracker
                         result={exp.result}
-                        roundsCount={exp.rounds.length}
-                        rounds={exp.rounds}
+                        roundsCount={exp.rounds?.length || 0}
+                        rounds={exp.rounds || []}
                         compact={true}
                       />
 
@@ -271,7 +271,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     </div>
 
                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                      <span>{exp.rounds.length} rounds</span>
+                      <span>{exp.rounds?.length || 0} rounds</span>
                       <span className="text-indigo-600 font-medium">View details →</span>
                     </div>
                   </div>
