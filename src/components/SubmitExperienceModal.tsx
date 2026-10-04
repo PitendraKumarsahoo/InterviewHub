@@ -396,7 +396,11 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
         for (const qText of round.questions) {
           if (qText.trim()) {
             const qId = `q-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
-            const isCoding = round.roundName.toLowerCase().includes('coding');
+            const roundLower = round.roundName.toLowerCase();
+            const isCoding = roundLower.includes('coding') || roundLower.includes('online assessment') || roundLower.includes('oa');
+            const isGD = roundLower.includes('gd') || roundLower.includes('group discussion');
+            const isHR = roundLower.includes('hr') || roundLower.includes('human resource') || roundLower.includes('behavioral');
+            const isAptitude = roundLower.includes('aptitude');
             const qPayload = {
               id: qId,
               userId: user.uid,
@@ -404,7 +408,7 @@ export const SubmitExperienceModal: React.FC<SubmitExperienceModalProps> = ({
               companyId: compId,
               companyName: compName,
               experienceId,
-              type: isCoding ? 'Coding' : (round.roundName.toLowerCase().includes('hr') ? 'HR' : 'Technical'),
+              type: isCoding ? 'Coding' : isGD ? 'GD' : isHR ? 'HR' : isAptitude ? 'Aptitude' : 'Technical',
               questionText: qText.trim(),
               normalizedText: qText.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim(),
               technology: selectedTechs[0] || 'General',

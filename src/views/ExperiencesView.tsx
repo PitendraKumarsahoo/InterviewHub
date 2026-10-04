@@ -81,7 +81,13 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
       (resultFilter === 'Waiting' && statusCfg.type === 'waiting') ||
       exp.result === resultFilter;
     const matchesType = typeFilter === 'All' || exp.interviewType === typeFilter;
-    const matchesDiff = diffFilter === 'All' || exp.difficulty === diffFilter;
+    const expDiffStr = (exp.difficulty as string || '').toLowerCase();
+    const matchesDiff =
+      diffFilter === 'All' ||
+      (diffFilter === 'Hard' && (expDiffStr === 'hard' || expDiffStr === 'difficult')) ||
+      (diffFilter === 'Moderate' && (expDiffStr === 'moderate' || expDiffStr === 'medium')) ||
+      (diffFilter === 'Easy' && expDiffStr === 'easy') ||
+      expDiffStr === diffFilter.toLowerCase();
     const matchesTech = techFilter === 'All' || exp.technologies?.includes(techFilter);
 
     return (
@@ -265,6 +271,18 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
         </select>
 
         <select
+          value={diffFilter}
+          onChange={(e) => setDiffFilter(e.target.value)}
+          aria-label="Filter experiences by difficulty"
+          className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
+        >
+          <option value="All">All Difficulties</option>
+          <option value="Easy">Easy</option>
+          <option value="Moderate">Moderate</option>
+          <option value="Hard">Hard</option>
+        </select>
+
+        <select
           value={techFilter}
           onChange={(e) => setTechFilter(e.target.value)}
           className="px-3.5 py-1.5 bg-white border border-slate-200/90 rounded-lg text-xs text-slate-700 outline-none hover:border-slate-300 shadow-2xs cursor-pointer font-medium"
@@ -281,6 +299,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
           yearFilter !== 'All' ||
           resultFilter !== 'All' ||
           typeFilter !== 'All' ||
+          diffFilter !== 'All' ||
           techFilter !== 'All' ||
           search) && (
           <button
@@ -290,6 +309,7 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
               setYearFilter('All');
               setResultFilter('All');
               setTypeFilter('All');
+              setDiffFilter('All');
               setTechFilter('All');
               setSearch('');
             }}
@@ -362,7 +382,15 @@ export const ExperiencesView: React.FC<ExperiencesViewProps> = ({
                     {exp.difficulty && (
                       <>
                         <span>·</span>
-                        <span className="text-slate-600 font-medium">{exp.difficulty}</span>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold border ${
+                          exp.difficulty.toLowerCase() === 'easy'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : exp.difficulty.toLowerCase() === 'moderate' || exp.difficulty.toLowerCase() === 'medium'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-rose-50 text-rose-800 border-rose-200'
+                        }`}>
+                          {exp.difficulty === 'Difficult' ? 'Hard' : exp.difficulty}
+                        </span>
                       </>
                     )}
                   </div>

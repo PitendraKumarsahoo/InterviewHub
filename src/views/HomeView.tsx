@@ -73,21 +73,91 @@ export const HomeView: React.FC<HomeViewProps> = ({
     'SQL',
   ];
 
+  const isRoundCategoryFilter = (filter: string) =>
+    ['Technical', 'GD Round', 'HR', 'Coding'].includes(filter);
+
+  const doesRoundMatchFilter = (roundName: string, filter: string): boolean => {
+    const rn = (roundName || '').toLowerCase();
+    const f = filter.toLowerCase().trim();
+    if (f === 'all') return true;
+    if (f === 'technical') {
+      return rn.includes('technical') || rn.includes('tech') || rn.includes('system design');
+    }
+    if (f === 'gd round' || f === 'gd') {
+      return rn.includes('gd') || rn.includes('group discussion');
+    }
+    if (f === 'hr') {
+      return rn.includes('hr') || rn.includes('human resource') || rn.includes('behavioral') || rn.includes('managerial');
+    }
+    if (f === 'coding') {
+      return rn.includes('coding') || rn.includes('online assessment') || rn.includes('oa') || rn.includes('machine coding') || rn.includes('live coding');
+    }
+    return rn.includes(f);
+  };
+
   // Filtered lists based on activeFilter
   const filteredExperiences = experiences.filter((exp) => {
     if (activeFilter === 'All') return true;
-    const matchType = exp.interviewType.toLowerCase().includes(activeFilter.toLowerCase());
-    const matchTech = exp.technologies.some((t) => t.toLowerCase() === activeFilter.toLowerCase());
-    const matchRole = exp.role.toLowerCase().includes(activeFilter.toLowerCase());
-    return matchType || matchTech || matchRole;
+    const f = activeFilter.toLowerCase().trim();
+    const safeRounds = Array.isArray(exp.rounds) ? exp.rounds : [];
+    const safeTechs = Array.isArray(exp.technologies) ? exp.technologies : [];
+    const safeTags = Array.isArray(exp.tags) ? exp.tags : [];
+
+    const matchRound = safeRounds.some((r: any) => {
+      const rName = typeof r === 'string' ? r : (r?.roundName || '');
+      const rQuestions: string[] = Array.isArray(r?.questions) ? r.questions : [];
+      if (doesRoundMatchFilter(rName, activeFilter)) return true;
+      if (!isRoundCategoryFilter(activeFilter)) {
+        return rQuestions.some((qText) => (qText || '').toLowerCase().includes(f));
+      }
+      return false;
+    });
+
+    if (isRoundCategoryFilter(activeFilter)) {
+      const matchTagForRound = safeTags.some((tag) => doesRoundMatchFilter(tag, activeFilter));
+      const matchQuestionForRound = questions.some(
+        (q) => q.experienceId === exp.id && doesRoundMatchFilter(q.type || '', activeFilter)
+      );
+      return matchRound || matchTagForRound || matchQuestionForRound;
+    }
+
+    const matchType = (exp.interviewType || '').toLowerCase().includes(f);
+    const matchTech = safeTechs.some((t) => (t || '').toLowerCase() === f || (t || '').toLowerCase().includes(f));
+    const matchTag = safeTags.some((tag) => (tag || '').toLowerCase().includes(f));
+    const matchRole = (exp.role || '').toLowerCase().includes(f);
+    const matchText = (exp.experienceText || '').toLowerCase().includes(f);
+    return matchRound || matchType || matchTech || matchTag || matchRole || matchText;
   });
 
   const filteredQuestions = questions.filter((q) => {
     if (activeFilter === 'All') return true;
-    const matchType = q.type.toLowerCase().includes(activeFilter.toLowerCase());
-    const matchTech = q.technology?.toLowerCase() === activeFilter.toLowerCase();
-    const matchText = q.questionText.toLowerCase().includes(activeFilter.toLowerCase());
-    return matchType || matchTech || matchText;
+    const f = activeFilter.toLowerCase().trim();
+    const qType = (q.type || '').toLowerCase();
+    const qTech = (q.technology || '').toLowerCase();
+    const qText = (q.questionText || '').toLowerCase();
+    const parentExp = experiences.find((e) => e.id === q.experienceId);
+
+    if (isRoundCategoryFilter(activeFilter)) {
+      if (parentExp && Array.isArray(parentExp.rounds)) {
+        const matchedRoundsForQ = parentExp.rounds.filter((r: any) =>
+          Array.isArray(r?.questions) &&
+          r.questions.some((rq: string) => (rq || '').trim().toLowerCase() === qText.trim())
+        );
+        if (matchedRoundsForQ.length > 0) {
+          return matchedRoundsForQ.some((r: any) => doesRoundMatchFilter(r.roundName || '', activeFilter));
+        }
+      }
+      return doesRoundMatchFilter(qType, activeFilter);
+    }
+
+    const matchType = qType.includes(f);
+    const matchTech = qTech === f || qTech.includes(f);
+    const matchText = qText.includes(f);
+    const matchParentTech = parentExp
+      ? (parentExp.technologies || []).some((t) => (t || '').toLowerCase() === f || (t || '').toLowerCase().includes(f)) ||
+        (parentExp.tags || []).some((tag) => (tag || '').toLowerCase().includes(f))
+      : false;
+    return matchType || matchTech || matchText || matchParentTech;
   });
 
   const popularCompanies = [...companies].sort((a, b) => b.viewCount - a.viewCount).slice(0, 4);
@@ -293,6 +363,226 @@ export const HomeView: React.FC<HomeViewProps> = ({
               Search
             </button>
           </form>
+        </div>
+
+        {/* DIRECT FILTERED CONTENT PANEL (Shows matching uploaded part directly when any filter or All is clicked) */}
+        <div className="pt-2 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-[#EAE4DC]/80">
+            <div className="flex items-center gap-2.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#0F172A] text-white">
+                <Layers className="w-3.5 h-3.5 text-orange-400" />
+                <span>{activeFilter === 'All' ? 'All Uploaded Parts' : activeFilter}</span>
+              </span>
+              <span className="text-xs sm:text-sm font-semibold text-slate-600">
+                {filteredExperiences.length} {filteredExperiences.length === 1 ? 'Experience' : 'Experiences'} ·{' '}
+                {filteredQuestions.length} {filteredQuestions.length === 1 ? 'Question' : 'Questions'}
+              </span>
+            </div>
+
+            {activeFilter !== 'All' && (
+              <button
+                type="button"
+                onClick={() => handleFilterClick('All')}
+                className="text-xs font-bold text-orange-600 hover:text-orange-700 cursor-pointer flex items-center gap-1"
+              >
+                <span>Show All Parts</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {filteredExperiences.length > 0 || filteredQuestions.length > 0 ? (
+            <div className="space-y-4">
+              {filteredExperiences.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredExperiences.map((exp) => {
+                    const safeRounds = Array.isArray(exp.rounds) ? exp.rounds : [];
+                    const matchedRounds =
+                      activeFilter === 'All'
+                        ? safeRounds
+                        : safeRounds.filter((r: any) => {
+                            const rName = typeof r === 'string' ? r : (r?.roundName || '');
+                            return doesRoundMatchFilter(rName, activeFilter);
+                          });
+
+                    return (
+                      <div
+                        key={`direct-${exp.id}`}
+                        onClick={() => onSelectExperience(exp)}
+                        className="p-5 bg-white rounded-2xl border border-[#EAE4DC] hover:border-orange-300 hover:shadow-md transition-all cursor-pointer group flex flex-col justify-between shadow-2xs"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-base group-hover:text-orange-600 transition-colors">
+                                {exp.companyName}
+                              </h3>
+                              <span className="text-xs text-slate-500 font-medium">
+                                {exp.role} · {exp.interviewType}
+                              </span>
+                            </div>
+                            <StatusTag result={exp.result} size="sm" showDot={true} showPulse={true} />
+                          </div>
+
+                          {/* Directly show matched round(s) & questions when a round filter or All is clicked */}
+                          {matchedRounds.length > 0 ? (
+                            <div className="space-y-2">
+                              {matchedRounds.map((r: any, rIdx: number) => {
+                                const rName = typeof r === 'string' ? r : (r?.roundName || `Round ${rIdx + 1}`);
+                                const rQuestions: string[] = Array.isArray(r?.questions)
+                                  ? r.questions.filter((q: string) => q && q.trim())
+                                  : [];
+                                return (
+                                  <div
+                                    key={rIdx}
+                                    className={`p-3 rounded-xl border ${
+                                      activeFilter !== 'All'
+                                        ? 'bg-orange-50/70 border-orange-200'
+                                        : 'bg-[#FAF8F5] border-[#EAE4DC]'
+                                    } space-y-1.5`}
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-[#EA580C]" />
+                                        {rName}
+                                      </span>
+                                      <span className="text-[11px] font-semibold text-orange-700 bg-orange-100/80 px-2 py-0.5 rounded-md">
+                                        {rQuestions.length} {rQuestions.length === 1 ? 'Question' : 'Questions'}
+                                      </span>
+                                    </div>
+                                    {rQuestions.length > 0 ? (
+                                      <ul className="space-y-1 text-xs text-slate-700 pl-1">
+                                        {rQuestions.slice(0, 3).map((qText: string, qIdx: number) => (
+                                          <li key={qIdx} className="line-clamp-2 font-medium">
+                                            • {qText}
+                                          </li>
+                                        ))}
+                                        {rQuestions.length > 3 && (
+                                          <li className="text-[11px] text-orange-600 font-semibold">
+                                            +{rQuestions.length - 3} more in this round
+                                          </li>
+                                        )}
+                                      </ul>
+                                    ) : (
+                                      <p className="text-xs text-slate-600 line-clamp-2">
+                                        {exp.experienceText}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                              {exp.experienceText}
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {(exp.technologies || []).slice(0, 4).map((t) => {
+                              const isHighlightedTech = t.toLowerCase() === activeFilter.toLowerCase();
+                              return (
+                                <span
+                                  key={t}
+                                  className={`px-2 py-0.5 text-[11px] font-semibold rounded-md border ${
+                                    isHighlightedTech
+                                      ? 'bg-orange-600 text-white border-orange-600'
+                                      : 'bg-[#FAF8F5] text-slate-700 border-[#EAE4DC]'
+                                  }`}
+                                >
+                                  {t}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-[#EAE4DC]/60 flex items-center justify-between text-xs text-slate-500">
+                          <span className="font-medium">{safeRounds.length} Interview Rounds</span>
+                          <span className="text-orange-600 font-semibold group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                            View Full Debrief →
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {filteredQuestions.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  {filteredQuestions.slice(0, 4).map((q) => (
+                    <div
+                      key={`direct-q-${q.id}`}
+                      onClick={() => onSelectQuestion(q)}
+                      className="p-4 bg-white rounded-xl border border-[#EAE4DC] hover:border-orange-400 transition-all cursor-pointer flex items-start justify-between gap-3 group shadow-2xs"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 text-[11px] font-bold rounded bg-orange-50 text-orange-700 border border-orange-200">
+                            {q.type}
+                          </span>
+                          {q.technology && (
+                            <span className="text-xs font-semibold text-slate-500">
+                              {q.technology}
+                            </span>
+                          )}
+                          {q.companyName && (
+                            <span className="text-xs font-bold text-slate-700">
+                              · {q.companyName}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-slate-900 group-hover:text-orange-600 transition-colors line-clamp-2">
+                          {q.questionText}
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold text-orange-600 shrink-0 self-center">
+                        View →
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-8 sm:p-10 text-center bg-white rounded-2xl border border-[#EAE4DC] space-y-3.5 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div className="space-y-1 max-w-md mx-auto">
+                <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">
+                  {activeFilter === 'All'
+                    ? 'No interview experiences uploaded yet'
+                    : `No "${activeFilter}" uploads found yet`}
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  {activeFilter === 'All'
+                    ? 'Be the first to share your interview rounds and questions.'
+                    : `No one has uploaded ${activeFilter} round experiences or questions yet. Share yours or click "All" to view all uploaded parts.`}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={onOpenSubmit}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#EA580C] hover:bg-[#C2410C] text-white rounded-xl text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer"
+                >
+                  <span>Share Experience</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                {activeFilter !== 'All' && (
+                  <button
+                    type="button"
+                    onClick={() => handleFilterClick('All')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#F3EFE9] hover:bg-[#EAE4DC] text-slate-900 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+                  >
+                    Show All Parts
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

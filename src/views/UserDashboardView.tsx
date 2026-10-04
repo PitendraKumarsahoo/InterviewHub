@@ -19,9 +19,12 @@ import {
   X,
   Sparkles,
   TrendingUp,
-  Share2
+  Share2,
+  Download,
+  Filter
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { exportExperiencePDF } from '../lib/pdfExport';
 import { db } from '../lib/firebase';
 import {
   collection,
@@ -54,9 +57,9 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
   onSelectQuestion,
   onOpenSubmit,
 }) => {
-  const { user, userProfile, signInWithGoogle } = useAuth();
+  const { user, userProfile, signInWithGoogle, toggleBookmarkExperience } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<'experiences' | 'questions' | 'bookmarks'>('experiences');
+  const [activeTab, setActiveTab] = useState<'experiences' | 'questions' | 'saved' | 'bookmarks'>('experiences');
   const [userExperiences, setUserExperiences] = useState<InterviewExperience[]>([]);
   const [userQuestions, setUserQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +95,31 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
     (exp) =>
       userProfile?.bookmarkedExperienceIds?.includes(exp.id) ||
       exp.bookmarkedBy?.includes(user?.uid || '')
+  );
+
+  // Difficulty filter for dashboard experiences (My Experiences & Saved Debriefs)
+  const [expDifficultyFilter, setExpDifficultyFilter] = useState<'All' | 'Easy' | 'Moderate' | 'Hard'>('All');
+
+  const matchesDifficulty = (expDifficulty?: string, filter?: string) => {
+    if (!filter || filter === 'All') return true;
+    if (!expDifficulty) return false;
+    const d = expDifficulty.toLowerCase();
+    const f = filter.toLowerCase();
+    if (f === 'hard' || f === 'difficult') {
+      return d === 'hard' || d === 'difficult';
+    }
+    if (f === 'moderate' || f === 'medium') {
+      return d === 'moderate' || d === 'medium';
+    }
+    return d === f;
+  };
+
+  const filteredUserExperiences = userExperiences.filter((exp) =>
+    matchesDifficulty(exp.difficulty, expDifficultyFilter)
+  );
+
+  const filteredBookmarkedExperiences = bookmarkedExperiences.filter((exp) =>
+    matchesDifficulty(exp.difficulty, expDifficultyFilter)
   );
 
   // Fetch or filter user contributions
@@ -475,17 +503,54 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
 
         <button
           type="button"
-          onClick={() => setActiveTab('bookmarks')}
+          onClick={() => setActiveTab('saved')}
           className={`flex-1 min-w-[150px] min-h-[48px] py-3.5 px-4 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer flex items-center justify-center gap-2 whitespace-nowrap touch-manipulation ${
-            activeTab === 'bookmarks'
+            activeTab === 'saved' || activeTab === 'bookmarks'
               ? 'bg-white text-[#EA580C] shadow-sm'
               : 'text-slate-700 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           <Bookmark className="w-4 h-4 shrink-0" />
-          <span>Saved Debriefs ({bookmarkedExperiences.length})</span>
+          <span>Saved ({bookmarkedExperiences.length})</span>
         </button>
       </div>
+
+      {/* Difficulty Filter Dropdown (Active for Experiences and Saved tabs) */}
+      {(activeTab === 'experiences' || activeTab === 'saved' || activeTab === 'bookmarks') && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-orange-600 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold text-slate-700">Filter by Difficulty:</span>
+            <span className="text-xs text-slate-500 font-medium">
+              ({activeTab === 'experiences' ? filteredUserExperiences.length : filteredBookmarkedExperiences.length} of {activeTab === 'experiences' ? userExperiences.length : bookmarkedExperiences.length})
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <select
+              value={expDifficultyFilter}
+              onChange={(e) => setExpDifficultyFilter(e.target.value as any)}
+              aria-label="Filter experiences by difficulty"
+              className="px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-bold text-slate-800 outline-none hover:border-orange-500 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 cursor-pointer transition-all min-w-[170px]"
+            >
+              <option value="All">All Difficulties</option>
+              <option value="Easy">Easy</option>
+              <option value="Moderate">Moderate</option>
+              <option value="Hard">Hard</option>
+            </select>
+
+            {expDifficultyFilter !== 'All' && (
+              <button
+                type="button"
+                onClick={() => setExpDifficultyFilter('All')}
+                className="text-xs sm:text-sm text-orange-600 hover:text-orange-700 font-bold px-2.5 py-1.5 rounded-lg hover:bg-orange-50 transition-colors cursor-pointer"
+              >
+                Reset
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* TAB 1: MY EXPERIENCES (Card-based Grid) */}
       {activeTab === 'experiences' && (
@@ -512,9 +577,28 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
+          ) : filteredUserExperiences.length === 0 ? (
+            <div className="p-10 text-center bg-white rounded-3xl border border-slate-200 space-y-3.5 shadow-sm">
+              <Filter className="w-10 h-10 text-slate-300 mx-auto" />
+              <div className="space-y-1 max-w-md mx-auto">
+                <h3 className="font-extrabold text-slate-900 text-lg">
+                  No {expDifficultyFilter} experiences found
+                </h3>
+                <p className="text-sm text-slate-600 font-medium">
+                  None of your shared experiences match the &quot;{expDifficultyFilter}&quot; difficulty level.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpDifficultyFilter('All')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-xs hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Clear Difficulty Filter
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-              {userExperiences.map((exp) => (
+              {filteredUserExperiences.map((exp) => (
                 <div
                   key={exp.id}
                   className="p-6 sm:p-7 bg-white rounded-2xl border border-slate-200/90 hover:border-orange-300 shadow-xs hover:shadow-md flex flex-col justify-between space-y-5 transition-all"
@@ -534,7 +618,20 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
                           </p>
                         </div>
                       </div>
-                      <StatusTag result={exp.result} size="sm" showDot={true} />
+                      <div className="flex items-center gap-2">
+                        {exp.difficulty && (
+                          <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${
+                            exp.difficulty.toLowerCase() === 'easy'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                              : exp.difficulty.toLowerCase() === 'moderate' || exp.difficulty.toLowerCase() === 'medium'
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-rose-50 text-rose-800 border-rose-200'
+                          }`}>
+                            {exp.difficulty === 'Difficult' ? 'Hard' : exp.difficulty}
+                          </span>
+                        )}
+                        <StatusTag result={exp.result} size="sm" showDot={true} />
+                      </div>
                     </div>
 
                     <VisualProgressTracker
@@ -693,60 +790,159 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
         </div>
       )}
 
-      {/* TAB 3: SAVED BOOKMARKS (Card-based Grid) */}
-      {activeTab === 'bookmarks' && (
+      {/* TAB 3: SAVED EXPERIENCES (Card-based Grid) */}
+      {(activeTab === 'saved' || activeTab === 'bookmarks') && (
         <div className="space-y-6">
           {bookmarkedExperiences.length === 0 ? (
             <div className="p-10 sm:p-14 text-center bg-white rounded-3xl border border-slate-200 space-y-3.5 shadow-sm">
-              <Bookmark className="w-12 h-12 text-slate-300 mx-auto" />
-              <div className="space-y-1 max-w-md mx-auto">
+              <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto shadow-2xs">
+                <Bookmark className="w-7 h-7" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
                 <h3 className="font-extrabold text-slate-900 text-lg sm:text-xl">
-                  No saved debriefs
+                  No saved experiences yet
                 </h3>
                 <p className="text-sm sm:text-base font-medium text-slate-600 leading-relaxed">
-                  Bookmark interview experiences from the feed to review rounds, questions, and preparation advice prior to campus placement drives.
+                  Bookmark interview experiences from the feed or company pages to quickly access rounds, questions, and preparation advice prior to campus placement drives.
                 </p>
               </div>
             </div>
+          ) : filteredBookmarkedExperiences.length === 0 ? (
+            <div className="p-10 text-center bg-white rounded-3xl border border-slate-200 space-y-3.5 shadow-sm">
+              <Filter className="w-10 h-10 text-slate-300 mx-auto" />
+              <div className="space-y-1 max-w-md mx-auto">
+                <h3 className="font-extrabold text-slate-900 text-lg">
+                  No {expDifficultyFilter} saved experiences found
+                </h3>
+                <p className="text-sm text-slate-600 font-medium">
+                  None of your bookmarked debriefs match the &quot;{expDifficultyFilter}&quot; difficulty level.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setExpDifficultyFilter('All')}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-xs hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                Clear Difficulty Filter
+              </button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
-              {bookmarkedExperiences.map((exp) => (
-                <div
-                  key={exp.id}
-                  onClick={() => onSelectExperience(exp)}
-                  className="p-6 bg-white rounded-2xl border border-slate-200/90 hover:border-orange-300 shadow-xs hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4 transition-all"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
-                          {exp.companyName?.charAt(0).toUpperCase() || 'C'}
+              {filteredBookmarkedExperiences.map((exp) => {
+                const safeRoundsList = Array.isArray(exp.rounds) ? exp.rounds : [];
+                return (
+                  <div
+                    key={exp.id}
+                    onClick={() => onSelectExperience(exp)}
+                    className="p-6 bg-white rounded-2xl border border-slate-200/90 hover:border-orange-300 shadow-xs hover:shadow-md cursor-pointer group flex flex-col justify-between space-y-4 transition-all"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-xl bg-[#0F172A] text-white flex items-center justify-center font-bold text-base shadow-xs shrink-0">
+                            {exp.companyName?.charAt(0).toUpperCase() || 'C'}
+                          </div>
+                          <div>
+                            <h3 className="font-extrabold text-slate-900 text-lg group-hover:text-orange-600 transition-colors">
+                              {exp.companyName}
+                            </h3>
+                            <p className="text-sm font-medium text-slate-600">
+                              {exp.role} · {exp.interviewType}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-extrabold text-slate-900 text-lg group-hover:text-orange-600 transition-colors">
-                            {exp.companyName}
-                          </h3>
-                          <p className="text-sm font-medium text-slate-600">
-                            {exp.role} · {exp.interviewType}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          {exp.difficulty && (
+                            <span className={`px-2.5 py-0.5 rounded-lg text-xs font-bold border ${
+                              exp.difficulty.toLowerCase() === 'easy'
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                : exp.difficulty.toLowerCase() === 'moderate' || exp.difficulty.toLowerCase() === 'medium'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                : 'bg-rose-50 text-rose-800 border-rose-200'
+                            }`}>
+                              {exp.difficulty === 'Difficult' ? 'Hard' : exp.difficulty}
+                            </span>
+                          )}
+                          <StatusTag result={exp.result} size="sm" />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleBookmarkExperience(exp.id);
+                            }}
+                            title="Remove from saved experiences"
+                            className="p-2 rounded-lg text-orange-600 hover:bg-orange-50 transition-colors cursor-pointer"
+                          >
+                            <Bookmark className="w-4 h-4 fill-orange-500 text-orange-600" />
+                          </button>
                         </div>
                       </div>
-                      <StatusTag result={exp.result} size="sm" />
+
+                      {/* Visual Progress / Status Indicator */}
+                      <VisualProgressTracker
+                        result={exp.result}
+                        roundsCount={safeRoundsList.length}
+                        rounds={safeRoundsList}
+                        compact={true}
+                      />
+
+                      <p className="text-sm sm:text-base font-medium text-slate-700 line-clamp-3 leading-relaxed">
+                        {exp.experienceText}
+                      </p>
+
+                      {/* Tech Stack Tags */}
+                      {Array.isArray(exp.technologies) && exp.technologies.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {exp.technologies.slice(0, 4).map((tech) => (
+                            <span
+                              key={tech}
+                              className="px-2.5 py-1 text-xs font-semibold bg-slate-100 text-slate-700 rounded-lg border border-slate-200"
+                            >
+                              {tech}
+                            </span>
+                          ))}
+                          {exp.technologies.length > 4 && (
+                            <span className="px-2 py-0.5 text-xs text-slate-400 font-medium">
+                              +{exp.technologies.length - 4}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <p className="text-sm sm:text-base font-medium text-slate-700 line-clamp-3 leading-relaxed">
-                      {exp.experienceText}
-                    </p>
+                    <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between text-sm font-medium text-slate-600">
+                      <span className="text-xs text-slate-500 font-medium">
+                        {safeRoundsList.length} {safeRoundsList.length === 1 ? 'round conducted' : 'rounds conducted'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            exportExperiencePDF(exp);
+                          }}
+                          title="Download structured PDF brief for offline prep"
+                          className="px-2.5 py-1.5 rounded-lg text-slate-700 hover:text-orange-600 hover:bg-orange-50 transition-colors flex items-center gap-1.5 text-xs font-bold border border-slate-200 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-slate-500" />
+                          <span>PDF</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectExperience(exp);
+                          }}
+                          className="min-h-[36px] inline-flex items-center font-bold text-orange-600 hover:text-orange-700 cursor-pointer gap-1 group-hover:translate-x-0.5 transition-transform"
+                        >
+                          <span>View Full Debrief</span>
+                          <span>→</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="pt-3 border-t border-slate-200/80 flex items-center justify-between text-sm font-medium text-slate-600">
-                    <span>{exp.rounds?.length || 0} rounds conducted</span>
-                    <span className="font-bold text-orange-600 group-hover:translate-x-1 transition-transform">
-                      View Experience →
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -830,7 +1026,7 @@ export const UserDashboardView: React.FC<UserDashboardViewProps> = ({
                           : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
                       }`}
                     >
-                      {d}
+                      {d === 'Difficult' ? 'Hard / Difficult' : d}
                     </button>
                   ))}
                 </div>
